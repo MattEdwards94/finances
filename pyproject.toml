@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "finances"
+version = "0.0.1"
+description = "Budget tooling for Monzo CSV exports"
+readme = "README.md"
+authors = [ { name = "Matt Edwards", email = "matt.edwards94@gmail.com" } ]
+requires-python = ">=3.8"
+keywords = ["budget", "monzo"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["budget*"]
