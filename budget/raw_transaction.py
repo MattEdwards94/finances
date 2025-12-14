@@ -3,6 +3,8 @@ import datetime
 from decimal import Decimal, InvalidOperation
 from typing import Optional
 
+from . import common
+
 def parse_date(date_str: str) -> datetime.date:
     try:
         return datetime.datetime.strptime(date_str, '%d/%m/%Y').date()
@@ -17,27 +19,7 @@ class RawTransaction:
         self._raw = raw_data
         self._date = None
         self._amount = None
-        expected_fields = [
-            "Transaction ID",
-            "Date",
-            "Time",
-            "Type",
-            "Name",
-            "Emoji",
-            "Category",
-            "Amount",
-            "Currency",
-            "Local amount",
-            "Local currency",
-            "Notes and #tags",
-            "Address",
-            "Receipt",
-            "Description",
-            "Category split",
-            "Money Out",
-            "Money In"
-        ]
-        for field in expected_fields:
+        for field in common.EXPECTED_RAW_FIELDS:
             if field not in raw_data:
                 raise ValueError(f"Missing expected field: {field}")
 

@@ -1,0 +1,21 @@
+
+EXPECTED_RAW_FIELDS = [
+    "Transaction ID",
+    "Date",
+    "Time",
+    "Type",
+    "Name",
+    "Emoji",
+    "Category",
+    "Amount",
+    "Currency",
+    "Local amount",
+    "Local currency",
+    "Notes and #tags",
+    "Address",
+    "Receipt",
+    "Description",
+    "Category split",
+    "Money Out",
+    "Money In"
+]
