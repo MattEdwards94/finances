@@ -23,6 +23,12 @@ class RawTransaction:
             if field not in raw_data:
                 raise ValueError(f"Missing expected field: {field}")
 
+    def __str__(self) -> str:
+        return f"name={self.name():20s}, amount={self.amount():11,.2f}, date={self.date():%d-%m-%Y}, id={self.id()}"
+
+    def name(self) -> str:
+        return self._raw["Name"].strip()
+
     def id(self) -> str:
         return self._raw["Transaction ID"].strip()
 

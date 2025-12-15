@@ -9,7 +9,7 @@ class ProcessedTransaction:
         self.raw_trx = raw_transaction
 
     def write_to_csv(self, file_handle: csv.writer):
-
+        pass
 
 
 
