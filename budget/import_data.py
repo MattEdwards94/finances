@@ -31,15 +31,11 @@ def load_data(csv_filename: str) -> List[Transaction]:
         for row in reader:
             # Split raw and processed data
             raw_data = {k: row[k] for k in EXPECTED_RAW_FIELDS}
-            
+            processed_data = {k: row[k] for k in processed_columns}
+
             rt = RawTransaction(raw_data)
-            trx = Transaction(rt)
-            
-            # Populate processed fields if present
-            if 'category' in row:
-                trx.category = row['category']
-            if 'notes' in row:
-                trx.notes = row['notes']
-                
+            trx = Transaction(rt, processed_data)
+
+
             rows.append(trx)
     return rows

@@ -26,17 +26,21 @@ class RawTransaction:
     def __str__(self) -> str:
         return f"name={self.name():20s}, amount={self.amount():11,.2f}, date={self.date():%d-%m-%Y}, id={self.id()}"
 
+    @property
     def name(self) -> str:
         return self._raw["Name"].strip()
 
+    @property
     def id(self) -> str:
         return self._raw["Transaction ID"].strip()
 
+    @property
     def date(self) -> datetime.date:
         if self._date is None:
             self._date = parse_date(self._raw["Date"].strip())
         return self._date
 
+    @property
     def amount(self) -> float:
         if self._amount is None:
             try:

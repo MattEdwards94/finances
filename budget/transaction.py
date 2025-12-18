@@ -1,32 +1,50 @@
 import csv
 from dataclasses import dataclass
 from typing import Optional, List
-from .raw_transaction import RawTransaction
+from raw_transaction import RawTransaction
 from . import common
 
 class Transaction:
-    def __init__(self, raw_transaction: RawTransaction):
+    fields_to_persist = [
+        "excluded",
+    ]
+
+    def __init__(self, raw_transaction: RawTransaction, processed_columns: dict = {}):
         self.raw = raw_transaction
-        self.category: str = ""
-        self.notes: str = ""
-        # We can add more fields here as needed, e.g. pot_link_id
 
-    def __str__(self):
-        return f"{self.raw} | Cat: {self.category}"
+        # Processed fields
+        self.excluded: bool = False
 
-def save_transactions(filename: str, transactions: List['Transaction']):
+        # Update with any provided processed columns
+        for field, value in processed_columns.items():
+            if field not in self.fields_to_persist:
+                raise ValueError(f"Unknown processed field: {field}")
+            setattr(self, field, value)
+
+    def to_dict(self) -> dict:
+        """
+        Exports the transaction to a dictionary suitable for CSV writing, checking for
+        any possbile field conflicts.
+        """
+        data = self.raw._raw.copy()
+
+        for field in self.fields_to_persist:
+            # check it doesn't conflict with raw data fields
+            if field in common.EXPECTED_RAW_FIELDS:
+                raise ValueError(f"Processed field '{field}' conflicts with raw data fields.")
+            # add the data to the dict
+            data[field] = getattr(self, field)
+
+        return data
+
+def save_transactions(filename: str, transactions: List[Transaction]):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         # Combine raw fields and processed fields
-        fieldnames = common.EXPECTED_RAW_FIELDS + ['category', 'notes']
+        fieldnames = common.EXPECTED_RAW_FIELDS + Transaction.fields_to_persist
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
         for trx in transactions:
-            # Start with the raw data
-            row_data = trx.raw._raw.copy()
-            # Add processed data
-            row_data['category'] = trx.category
-            row_data['notes'] = trx.notes
-            writer.writerow(row_data)
+            writer.writerow(trx.to_dict())
 
 
