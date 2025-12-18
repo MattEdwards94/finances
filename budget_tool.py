@@ -20,7 +20,7 @@ import sys
 import collections
 
 from budget.raw_transaction import RawTransaction
-from budget.processed_transaction import ProcessedTransaction
+from budget.transaction import Transaction, save_transactions
 from budget.import_data import load_data
 
 

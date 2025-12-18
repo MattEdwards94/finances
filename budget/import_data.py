@@ -1,17 +1,18 @@
 import csv
 from typing import List
 
+from budget.transaction import Transaction
 from budget import RawTransaction
 from budget.common import EXPECTED_RAW_FIELDS
 
 
-def load_data(csv_filename: str) -> List[RawTransaction]:
+def load_data(csv_filename: str) -> List[Transaction]:
     """
     Reads a raw or processed data file. 
     The data file must have at least all of common.EXPECTED_RAW_FIELDS
 
     """
-    rows: List[RawTransaction] = []
+    rows: List[Transaction] = []
     with open(csv_filename, newline='', encoding='utf-8') as fh:
         reader = csv.DictReader(fh)
         
@@ -22,9 +23,23 @@ def load_data(csv_filename: str) -> List[RawTransaction]:
         if missing:
             raise ValueError(f"Missing fields: {', '.join(missing)}")
 
+        # Identify processed columns
+        processed_columns = [f for f in reader.fieldnames if f not in EXPECTED_RAW_FIELDS]
+
         print(f"Headers: {reader.fieldnames}")
 
         for row in reader:
-            rt = RawTransaction(row)
-            rows.append(rt)
+            # Split raw and processed data
+            raw_data = {k: row[k] for k in EXPECTED_RAW_FIELDS}
+            
+            rt = RawTransaction(raw_data)
+            trx = Transaction(rt)
+            
+            # Populate processed fields if present
+            if 'category' in row:
+                trx.category = row['category']
+            if 'notes' in row:
+                trx.notes = row['notes']
+                
+            rows.append(trx)
     return rows
