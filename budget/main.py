@@ -14,7 +14,7 @@ class BudgetApp(App):
         yield Header()
         with Horizontal():
             with Vertical(id="left-pane"):
-                yield DataTable(zebra_stripes=True)
+                yield DataTable(zebra_stripes=True, cursor_type="row")
             with Vertical(id="right-pane"):
                 yield Label("TRANSACTION DETAILS", id="sidebar-title")
                 yield Label("Description:", classes="detail-label")
@@ -38,11 +38,11 @@ class BudgetApp(App):
 
         table.focus()
 
-    def on_data_table_cell_highlighted(self, event: DataTable.CellHighlighted) -> None:
-        """Updates the sidebar using the coordinate from the highlight event."""
+    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+        """Updates the sidebar using the row key from the highlight event."""
         table = self.query_one(DataTable)
-        # Get the row data using the row index from the coordinate
-        row_data = table.get_row_at(event.coordinate.row)
+        # Get the row data using the row key
+        row_data = table.get_row(event.row_key)
         
         self.query_one("#det-desc").update(str(row_data[2]))
         self.query_one("#det-amt").update(str(row_data[3]))
