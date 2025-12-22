@@ -1,4 +1,5 @@
 import datetime
+from decimal import InvalidOperation
 
 from budget import common
 
@@ -23,21 +24,29 @@ class RawTransaction:
     def __str__(self) -> str:
         return f"name={self.name():20s}, amount={self.amount():11,.2f}, date={self.date():%d-%m-%Y}, id={self.id()}"
 
-    @property
-    def name(self) -> str:
-        return self._raw["Name"].strip()
-
-    @property
     def id(self) -> str:
         return self._raw["Transaction ID"].strip()
 
-    @property
     def date(self) -> datetime.date:
         if self._date is None:
             self._date = parse_date(self._raw["Date"].strip())
         return self._date
 
-    @property
+    def time(self):
+        return self._raw["Time"].strip()
+
+    def type(self):
+        return self._raw["Type"].strip()
+
+    def name(self) -> str:
+        return self._raw["Name"].strip()
+
+    def emoji(self) -> str:
+        return self._raw["Emoji"].strip()
+
+    def category(self) -> str:
+        return self._raw["Category"].strip()
+
     def amount(self) -> float:
         if self._amount is None:
             try:
@@ -45,4 +54,44 @@ class RawTransaction:
             except (ValueError, InvalidOperation):
                 raise ValueError(f"Invalid amount: {self._raw['Amount']}")
         return self._amount
+
+    def currency(self) -> str:
+        return self._raw["Currency"].strip()
+
+    def local_amount(self) -> float:
+        try:
+            return float(self._raw["Local Amount"].strip())
+        except (ValueError, InvalidOperation):
+            raise ValueError(f"Invalid local amount: {self._raw['Local Amount']}")
+
+    def local_currency(self) -> str:
+        return self._raw["Local Currency"].strip()
+
+    def notes(self) -> str:
+        return self._raw["Notes and #tags"].strip()
+
+    def address(self) -> str:
+        return self._raw["Address"].strip()
+    
+    def receipt(self) -> str:
+        return self._raw["Receipt"].strip()
+    
+    def description(self) -> str:
+        return self._raw["Description"].strip()
+    
+    def category_split(self) -> str:
+        return self._raw["Category split"].strip()
+
+    def money_out(self) -> float:
+        try:
+            return float(self._raw["Money out"].strip())
+        except (ValueError, InvalidOperation):
+            raise ValueError(f"Invalid money out: {self._raw['Money out']}")
+
+    def money_in(self) -> float:
+        try:
+            return float(self._raw["Money in"].strip())
+        except (ValueError, InvalidOperation):
+            raise ValueError(f"Invalid money in: {self._raw['Money in']}")
+
 

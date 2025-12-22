@@ -37,21 +37,26 @@ class Transaction:
 
         return data
 
-    @property
-    def date(self):
-        return self.raw.date
+    def id(self):
+        return self.raw.id()
 
-    @property
-    def description(self):
-        return self.raw._raw["Description"]
-    
-    @property
-    def amount(self):
-        return self.raw.amount
-    
-    @property
+    def date(self):
+        return self.raw.date()
+
+    def type(self):
+        return self.raw.type()
+
+    def name(self):
+        return self.raw.name()
+
     def category(self):
-        return self.raw._raw["Category"]
+        return self.raw.category()
+
+    def amount(self):
+        return self.raw.amount()
+
+    def notes(self):
+        return self.raw.notes()
 
 def save_transactions(filename: str, transactions: List[Transaction]):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:

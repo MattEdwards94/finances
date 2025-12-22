@@ -28,12 +28,13 @@ class BudgetApp(App):
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
         trxs = load_data(self.file_path)
-        table.add_columns(*EXPECTED_RAW_FIELDS)
+        table.add_columns("Date", "Type", "Name", "Amount", "Notes")
 
         for index, trx in enumerate(trxs):
             table.add_row(
-                trx.date, trx.description, trx.amount, trx.category, 
+                trx.date(), trx.type(), trx.name(), trx.amount(), trx.notes(),
                 key=str(index)
             )
 
         table.focus()
+
