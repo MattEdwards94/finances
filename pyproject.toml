@@ -10,6 +10,9 @@ readme = "README.md"
 authors = [ { name = "Matt Edwards", email = "matt.edwards94@gmail.com" } ]
 requires-python = ">=3.8"
 keywords = ["budget", "monzo"]
+dependencies = [
+    "Textual"
+]
 
 [project.optional-dependencies]
 dev = ["pytest"]
