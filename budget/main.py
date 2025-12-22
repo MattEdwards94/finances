@@ -38,3 +38,13 @@ class BudgetApp(App):
 
         table.focus()
 
+    def on_data_table_cell_highlighted(self, event: DataTable.CellHighlighted) -> None:
+        """Updates the sidebar using the coordinate from the highlight event."""
+        table = self.query_one(DataTable)
+        # Get the row data using the row index from the coordinate
+        row_data = table.get_row_at(event.coordinate.row)
+        
+        self.query_one("#det-desc").update(str(row_data[2]))
+        self.query_one("#det-amt").update(str(row_data[3]))
+        self.query_one("#det-status").update(str(row_data[1]))
+
