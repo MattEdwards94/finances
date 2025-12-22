@@ -1,0 +1,20 @@
+Screen {
+    layout: horizontal;
+}
+#left-pane {
+    width: 70%;
+    border-right: tall $primary;
+}
+#right-pane {
+    width: 30%;
+    padding: 1;
+    background: $boost;
+}
+.detail-label {
+    color: $accent;
+    text-style: bold;
+    margin-top: 1;
+}
+DataTable {
+    height: 1fr;
+}

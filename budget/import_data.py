@@ -2,7 +2,7 @@ import csv
 from typing import List
 
 from budget.transaction import Transaction
-from budget import RawTransaction
+from budget.raw_transaction import RawTransaction
 from budget.common import EXPECTED_RAW_FIELDS
 
 
@@ -10,7 +10,6 @@ def load_data(csv_filename: str) -> List[Transaction]:
     """
     Reads a raw or processed data file. 
     The data file must have at least all of common.EXPECTED_RAW_FIELDS
-
     """
     rows: List[Transaction] = []
     with open(csv_filename, newline='', encoding='utf-8') as fh:
@@ -25,8 +24,6 @@ def load_data(csv_filename: str) -> List[Transaction]:
 
         # Identify processed columns
         processed_columns = [f for f in reader.fieldnames if f not in EXPECTED_RAW_FIELDS]
-
-        print(f"Headers: {reader.fieldnames}")
 
         for row in reader:
             # Split raw and processed data

@@ -1,28 +1,10 @@
 #!/usr/bin/env python3
-"""
-Budget tool implementing initial_design.md structures.
 
-Provides:
-- ProcessedTransaction which wraps RawTransaction and adds classification
-- load_raw_data(csv_filename) -> list[RawTransaction]
-- process_transactions(raw_trxs) -> list[ProcessedTransaction]
-
-Small CLI: summary, list, reconcile-pots
-"""
-from __future__ import annotations
-import csv
-import datetime
-from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
-from typing import List, Optional, Dict, Tuple
 import argparse
 import sys
-import collections
 
-from budget.raw_transaction import RawTransaction
-from budget.transaction import Transaction, save_transactions
 from budget.import_data import load_data
-
+from budget.main import BudgetApp
 
 def parse_args():
     arg_parse = argparse.ArgumentParser()
@@ -32,17 +14,18 @@ def parse_args():
 def main():
     args = parse_args()
 
-    trxs = load_data(args.file)
-    if not trxs:
-        print('No transactions loaded from', args.file)
-        sys.exit(1)
+    app = BudgetApp(file_path=args.file)
+    app.run()
+    
 
-    for i, trx in enumerate(trxs):
-        if i < 10:
-            print(f"{trx}")
-
-
-
+    # trxs = load_data(args.file)
+    # if not trxs:
+    #     print('No transactions loaded from', args.file)
+    #     sys.exit(1)
+    #
+    # for i, trx in enumerate(trxs):
+    #     if i < 10:
+    #         print(f"{trx}")
 
 
 if __name__ == '__main__':

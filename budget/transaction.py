@@ -1,8 +1,8 @@
 import csv
 from dataclasses import dataclass
 from typing import Optional, List
-from raw_transaction import RawTransaction
-from . import common
+from budget.raw_transaction import RawTransaction
+from budget import common
 
 class Transaction:
     fields_to_persist = [
@@ -36,6 +36,22 @@ class Transaction:
             data[field] = getattr(self, field)
 
         return data
+
+    @property
+    def date(self):
+        return self.raw.date
+
+    @property
+    def description(self):
+        return self.raw._raw["Description"]
+    
+    @property
+    def amount(self):
+        return self.raw.amount
+    
+    @property
+    def category(self):
+        return self.raw._raw["Category"]
 
 def save_transactions(filename: str, transactions: List[Transaction]):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
