@@ -21,7 +21,6 @@ class BudgetApp(App):
         Binding("f", "toggle_filter_category", "Filter Category"),
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
-        Binding("c", "clear_data", "Clear"),
     ]
 
     def __init__(self, file_path: str | None = None):
@@ -95,10 +94,23 @@ class BudgetApp(App):
         self.push_screen(SaveScreen(), check_save)
 
     def action_load_file(self) -> None:
-        if self.transactions:
-            self.notify("Data already loaded. Please clear data first.", severity="error")
+        if not self.transactions:
+            self._show_load_screen()
             return
 
+        def check_clear(response: str) -> None:
+            if response == "cancel":
+                return
+
+            if response == "yes":
+                self._save_and_clear(next_action=self._show_load_screen)
+            else:
+                self._clear_internal()
+                self._show_load_screen()
+
+        self.push_screen(ClearDataConfirmScreen(), check_clear)
+
+    def _show_load_screen(self) -> None:
         def check_load(filename: str | None) -> None:
             if filename:
                 self.load_transactions(filename)
@@ -122,12 +134,14 @@ class BudgetApp(App):
 
         self.push_screen(ClearDataConfirmScreen(), check_clear)
 
-    def _save_and_clear(self):
+    def _save_and_clear(self, next_action=None):
         def after_save(filename: str | None) -> None:
             if filename:
                 save_transactions(filename, self.transactions)
                 self.notify(f"Saved to {filename}")
                 self._clear_internal()
+                if next_action:
+                    next_action()
             # If cancelled, filename==None, do nothing.
 
         self.push_screen(SaveScreen(), after_save)
