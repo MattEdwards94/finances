@@ -3,6 +3,16 @@ from textual.widgets import Header, Footer, DataTable, Label
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from budget import load_data
+from budget.transaction import Transaction
+
+FIELDS_TO_DISPLAY = [
+    "date",
+    "type",
+    "name",
+    "amount",
+    "notes",
+    "category",
+]
 
 class BudgetApp(App):
     CSS_PATH = "styles/style.tcss"
@@ -46,8 +56,9 @@ class BudgetApp(App):
         table.add_column("Category", width=20)
 
         for index, trx in enumerate(self.transactions):
+            fields = [getattr(trx, field)() for field in FIELDS_TO_DISPLAY]
             table.add_row(
-                trx.date(), trx.type(), trx.name(), trx.amount(), trx.notes(), trx.category(),
+                *fields,
                 key=str(index)
             )
 
@@ -55,31 +66,51 @@ class BudgetApp(App):
 
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
         """Updates the sidebar using the row key from the highlight event."""
-        table = self.query_one(DataTable)
-        # Get the row data using the row key
-        row_data = table.get_row(event.row_key)
-
-        self.query_one("#det-desc").update(str(row_data[2]))
-        self.query_one("#det-amt").update(str(row_data[3]))
-        self.query_one("#det-category").update(str(row_data[5]))
-        self.query_one("#det-status").update(str(row_data[1]))
+        trx = self._get_trx_for_cursor()
+        self._update_sidebar(trx)
 
     def action_set_category(self, category: str) -> None:
         table = self.query_one(DataTable)
         if table.row_count == 0:
             return
 
-        # Get the current row key
+        trx = self._get_trx_for_cursor()
+        trx.set_category(category)
+
+        self._update_row()
+
+    def _get_trx_for_cursor(self) -> Transaction:
+        """
+        Maps the current cursor position in the table to the corresponding transaction
+        """
+        table = self.query_one(DataTable)
+        if table.row_count == 0:
+            raise ValueError("No rows in the table")
+
+        # Note: The row_key relates to the transaction index in self.transactions, which may
+        # not be the same as the cursor.row if the order has changed due to e.g. sorting output
+        row_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
+        index = int(row_key.value) # type: ignore
+
+        return self.transactions[index]
+
+    def _update_row(self) -> None:
+        """
+        Reloads the current row in the table to reflect any changes made to the 
+        underlying transaction, and updates the sidebar.
+        """
+        table = self.query_one(DataTable)
         coordinate = table.cursor_coordinate
-        row_key = table.coordinate_to_cell_key(coordinate).row_key
+        trx = self._get_trx_for_cursor()
+        for col_index, field in enumerate(FIELDS_TO_DISPLAY):
+            value = getattr(trx, field)()
+            table.update_cell_at((table.cursor_coordinate.row, col_index), value) # type: ignore
 
-        # Update the transaction
-        index = int(row_key.value)
-        self.transactions[index].set_category(category)
+        self._update_sidebar(trx)
 
-        # Update the table
-        # Category is the 6th column (index 5)
-        table.update_cell_at((coordinate.row, 5), category)
+    def _update_sidebar(self, trx: Transaction) -> None:
+        self.query_one("#det-desc").update(trx.raw.name())
+        self.query_one("#det-amt").update(str(trx.raw.amount()))
+        self.query_one("#det-category").update(trx.category())
+        self.query_one("#det-status").update(trx.status())
 
-        # Update the sidebar
-        self.query_one("#det-category").update(category)
