@@ -3,7 +3,7 @@ import pytest
 from budget.main import BudgetApp
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
-from budget.screens import ClearDataConfirmScreen, LoadScreen, SaveScreen
+from budget.screens import SaveChangesConfirmScreen, LoadScreen, SaveScreen
 from tests import utils
 
 @pytest.mark.asyncio
@@ -20,15 +20,15 @@ async def test_load_flow_existing_data_cancel_clear():
             app.action_load_file()
             await pilot.pause()
 
-            # Should see ClearDataConfirmScreen
-            assert isinstance(app.screen, ClearDataConfirmScreen)
+            # Should see SaveChangesConfirmScreen
+            assert isinstance(app.screen, SaveChangesConfirmScreen)
 
             # Click Cancel
             await pilot.click("#cancel")
             await pilot.pause()
 
             # Should be back to main screen, data preserved
-            assert not isinstance(app.screen, ClearDataConfirmScreen)
+            assert not isinstance(app.screen, SaveChangesConfirmScreen)
             assert len(app.transactions) == 1
 
 @pytest.mark.asyncio

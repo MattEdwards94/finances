@@ -2,7 +2,13 @@ import unittest.mock
 import pytest
 from textual.app import App
 from textual.widgets import Label
-from budget.screens import OverwriteConfirmScreen, SaveChangesConfirmScreen, LoadScreen, SaveScreen
+from budget.screens import (
+    OverwriteConfirmScreen,
+    SaveChangesConfirmScreen,
+    LoadScreen,
+    SaveScreen,
+    FilterScreen
+)
 
 class ScreenTestApp(App):
     def __init__(self, screen_to_test):
@@ -149,3 +155,44 @@ async def test_save_screen_overwrite_deny():
 
             # Result should still be None (not dismissed)
             assert app.result is None
+
+# ESC key tests
+@pytest.mark.asyncio
+async def test_overwrite_confirm_screen_escape():
+    screen = OverwriteConfirmScreen()
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        await pilot.press("escape")
+        assert app.result is False
+
+@pytest.mark.asyncio
+async def test_save_changes_confirm_screen_escape():
+    screen = SaveChangesConfirmScreen()
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        await pilot.press("escape")
+        assert app.result == "cancel"
+
+@pytest.mark.asyncio
+async def test_load_screen_escape():
+    screen = LoadScreen()
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        await pilot.press("escape")
+        assert app.result is None
+
+@pytest.mark.asyncio
+async def test_save_screen_escape():
+    screen = SaveScreen()
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        await pilot.press("escape")
+        assert app.result is None
+
+@pytest.mark.asyncio
+async def test_filter_screen_escape():
+    screen = FilterScreen(categories=["Groceries", "Entertainment"], selected={"All"})
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        await pilot.press("escape")
+        assert app.result is None

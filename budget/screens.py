@@ -4,6 +4,7 @@ from textual.widgets import Label, Input, Button, DirectoryTree, SelectionList
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
+from textual.events import Key
 
 # pylint: disable=too-many-ancestors
 class BudgetSelectionList(SelectionList):
@@ -44,6 +45,10 @@ class FilterScreen(ModalScreen[list[str]]):
         elif event.button.id == "cancel":
             self.dismiss(None)
 
+    def on_key(self, event: Key) -> None:
+        if event.key == "escape":
+            self.dismiss(None)
+
 # pylint: disable=too-many-ancestors
 class BudgetDirectoryTree(DirectoryTree):
     BINDINGS = [
@@ -66,6 +71,10 @@ class OverwriteConfirmScreen(ModalScreen[bool]):
         else:
             self.dismiss(False)
 
+    def on_key(self, event: Key) -> None:
+        if event.key == "escape":
+            self.dismiss(False)
+
 class SaveChangesConfirmScreen(ModalScreen[str]):
     def __init__(self, message: str = "Save changes?"):
         super().__init__()
@@ -85,6 +94,10 @@ class SaveChangesConfirmScreen(ModalScreen[str]):
         elif event.button.id == "no":
             self.dismiss("no")
         else:
+            self.dismiss("cancel")
+
+    def on_key(self, event: Key) -> None:
+        if event.key == "escape":
             self.dismiss("cancel")
 
 class LoadScreen(ModalScreen[str]):
@@ -127,6 +140,10 @@ class LoadScreen(ModalScreen[str]):
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self.dismiss(event.value)
+
+    def on_key(self, event: Key) -> None:
+        if event.key == "escape":
+            self.dismiss(None)
 
 class SaveScreen(ModalScreen[str]):
     def compose(self) -> ComposeResult:
@@ -183,3 +200,7 @@ class SaveScreen(ModalScreen[str]):
 
     def on_input_submitted(self, _event: Input.Submitted) -> None:
         self.handle_save()
+
+    def on_key(self, event: Key) -> None:
+        if event.key == "escape":
+            self.dismiss(None)
