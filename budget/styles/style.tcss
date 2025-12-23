@@ -18,3 +18,30 @@ Screen {
 DataTable {
     height: 1fr;
 }
+
+SaveScreen {
+    align: center middle;
+}
+
+#dialog {
+    width: 60;
+    height: auto;
+    border: thick $background 80%;
+    background: $surface;
+    padding: 1 2;
+}
+
+#question {
+    margin-bottom: 1;
+}
+
+#buttons {
+    width: 100%;
+    height: auto;
+    margin-top: 1;
+    align: right middle;
+}
+
+Button {
+    margin-left: 1;
+}

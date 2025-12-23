@@ -1,8 +1,9 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Label, Static
+from textual.widgets import Header, Footer, DataTable, Label, Static, Input, Button
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
-from budget import load_data
+from textual.screen import ModalScreen
+from budget import load_data, save_transactions
 from budget.transaction import Transaction
 
 FIELDS_TO_DISPLAY = [
@@ -13,6 +14,28 @@ FIELDS_TO_DISPLAY = [
     "notes",
     "category",
 ]
+
+class SaveScreen(ModalScreen[str]):
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Label("Save to file:", id="question")
+            yield Input(placeholder="Enter filename", id="filename")
+            with Horizontal(id="buttons"):
+                yield Button("Save", variant="primary", id="save")
+                yield Button("Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one(Input).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "save":
+            input_widget = self.query_one(Input)
+            self.dismiss(input_widget.value)
+        else:
+            self.dismiss(None)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.dismiss(event.value)
 
 class BudgetApp(App):
     CSS_PATH = "styles/style.tcss"
@@ -25,6 +48,7 @@ class BudgetApp(App):
         Binding("n", "set_category('General')", "General"),
         Binding("h", "set_category('Holidays')", "Holidays"),
         Binding("p", "set_category('Pot')", "Pot"),
+        Binding("s", "save_transactions", "Save"),
     ]
 
     def __init__(self, file_path: str):
@@ -64,7 +88,7 @@ class BudgetApp(App):
 
         table.focus()
 
-    def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted) -> None:
+    def on_data_table_row_highlighted(self, _event: DataTable.RowHighlighted) -> None:
         """Updates the sidebar using the row key from the highlight event."""
         trx = self._get_trx_for_cursor()
         self._update_sidebar(trx)
@@ -78,6 +102,14 @@ class BudgetApp(App):
         trx.set_category(category)
 
         self._update_row()
+
+    def action_save_transactions(self) -> None:
+        def check_save(filename: str | None) -> None:
+            if filename:
+                save_transactions(filename, self.transactions)
+                self.notify(f"Saved to {filename}")
+
+        self.push_screen(SaveScreen(), check_save)
 
     def _get_trx_for_cursor(self) -> Transaction:
         """
@@ -100,7 +132,6 @@ class BudgetApp(App):
         underlying transaction, and updates the sidebar.
         """
         table = self.query_one(DataTable)
-        coordinate = table.cursor_coordinate
         trx = self._get_trx_for_cursor()
         for col_index, field in enumerate(FIELDS_TO_DISPLAY):
             value = getattr(trx, field)()
@@ -113,4 +144,3 @@ class BudgetApp(App):
         self.query_one("#det-amt", Static).update(str(trx.raw.amount()))
         self.query_one("#det-category", Static).update(trx.category())
         self.query_one("#det-status", Static).update(trx.status())
-
