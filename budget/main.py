@@ -30,6 +30,64 @@ class OverwriteConfirmScreen(ModalScreen[bool]):
         else:
             self.dismiss(False)
 
+class ClearDataConfirmScreen(ModalScreen[str]):
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Label("Save before clearing?", id="question")
+            with Horizontal(id="buttons"):
+                yield Button("Yes", variant="primary", id="yes")
+                yield Button("No", variant="error", id="no")
+                yield Button("Cancel", variant="default", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "yes":
+            self.dismiss("yes")
+        elif event.button.id == "no":
+            self.dismiss("no")
+        else:
+            self.dismiss("cancel")
+
+class LoadScreen(ModalScreen[str]):
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            with Horizontal(classes="header"):
+                yield Label("Select file to load:", id="question")
+                yield Button("Up", id="up", variant="primary")
+            yield DirectoryTree(str(Path.home() / "budget_data"))
+            yield Input(placeholder="Enter filename", id="filename")
+            with Horizontal(id="buttons"):
+                yield Button("Load", variant="primary", id="load")
+                yield Button("Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one(Input).focus()
+
+    def on_directory_tree_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
+        input_widget = self.query_one(Input)
+        input_widget.value = str(event.path) + "/"
+        input_widget.focus()
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        input_widget = self.query_one(Input)
+        input_widget.value = str(event.path)
+        input_widget.focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "load":
+            input_widget = self.query_one(Input)
+            self.dismiss(input_widget.value)
+        elif event.button.id == "up":
+            tree = self.query_one(DirectoryTree)
+            current = Path(tree.path).resolve()
+            parent = current.parent
+            tree.path = str(parent)
+            tree.reload()
+        elif event.button.id == "cancel":
+            self.dismiss(None)
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        self.dismiss(event.value)
+
 class SaveScreen(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
@@ -98,9 +156,11 @@ class BudgetApp(App):
         Binding("h", "set_category('Holidays')", "Holidays"),
         Binding("p", "set_category('Pot')", "Pot"),
         Binding("s", "save_transactions", "Save"),
+        Binding("l", "load_file", "Load"),
+        Binding("c", "clear_data", "Clear"),
     ]
 
-    def __init__(self, file_path: str):
+    def __init__(self, file_path: str | None = None):
         super().__init__()
         self.file_path = file_path
         self.transactions = []
@@ -124,10 +184,21 @@ class BudgetApp(App):
 
     def on_mount(self) -> None:
         table = self.query_one(DataTable)
-        self.transactions = load_data(self.file_path)
         table.add_columns("Date", "Type", "Name", "Amount", "Notes")
         table.add_column("Category", width=20)
 
+        if self.file_path:
+            self.load_transactions(self.file_path)
+
+    def load_transactions(self, file_path: str) -> None:
+        table = self.query_one(DataTable)
+        try:
+            self.transactions = load_data(file_path)
+        except Exception as e:
+            self.notify(f"Error loading file: {e}", severity="error")
+            return
+
+        table.clear()
         for index, trx in enumerate(self.transactions):
             fields = [getattr(trx, field)() for field in FIELDS_TO_DISPLAY]
             table.add_row(
@@ -139,6 +210,8 @@ class BudgetApp(App):
 
     def on_data_table_row_highlighted(self, _event: DataTable.RowHighlighted) -> None:
         """Updates the sidebar using the row key from the highlight event."""
+        if not self.transactions:
+            return
         trx = self._get_trx_for_cursor()
         self._update_sidebar(trx)
 
@@ -160,6 +233,53 @@ class BudgetApp(App):
 
         self.push_screen(SaveScreen(), check_save)
 
+    def action_load_file(self) -> None:
+        if self.transactions:
+            self.notify("Data already loaded. Please clear data first.", severity="error")
+            return
+
+        def check_load(filename: str | None) -> None:
+            if filename:
+                self.load_transactions(filename)
+                self.notify(f"Loaded {filename}")
+
+        self.push_screen(LoadScreen(), check_load)
+
+    def action_clear_data(self) -> None:
+        if not self.transactions:
+            self.notify("No data to clear.")
+            return
+
+        def check_clear(response: str) -> None:
+            if response == "cancel":
+                return
+
+            if response == "yes":
+                self._save_and_clear()
+            else:
+                self._clear_internal()
+
+        self.push_screen(ClearDataConfirmScreen(), check_clear)
+
+    def _save_and_clear(self):
+        def after_save(filename: str | None) -> None:
+            if filename:
+                save_transactions(filename, self.transactions)
+                self.notify(f"Saved to {filename}")
+                self._clear_internal()
+            # If cancelled, filename==None, do nothing.
+
+        self.push_screen(SaveScreen(), after_save)
+
+    def _clear_internal(self):
+        self.transactions = []
+        self.query_one(DataTable).clear()
+        self.query_one("#det-desc", Static).update("--")
+        self.query_one("#det-amt", Static).update("--")
+        self.query_one("#det-category", Static).update("--")
+        self.query_one("#det-status", Static).update("--")
+        self.notify("Data cleared")
+
     def _get_trx_for_cursor(self) -> Transaction:
         """
         Maps the current cursor position in the table to the corresponding transaction
@@ -177,7 +297,7 @@ class BudgetApp(App):
 
     def _update_row(self) -> None:
         """
-        Reloads the current row in the table to reflect any changes made to the 
+        Reloads the current row in the table to reflect any changes made to the
         underlying transaction, and updates the sidebar.
         """
         table = self.query_one(DataTable)

@@ -6,7 +6,7 @@ from budget.main import BudgetApp
 
 def parse_args():
     arg_parse = argparse.ArgumentParser()
-    arg_parse.add_argument('--file', '-f', required=True)
+    arg_parse.add_argument('--file', '-f', required=False)
     return arg_parse.parse_args()
 
 def main():
