@@ -1,8 +1,39 @@
 from pathlib import Path
 from textual.app import ComposeResult
-from textual.widgets import Label, Input, Button, DirectoryTree
+from textual.widgets import Label, Input, Button, DirectoryTree, SelectionList
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
+
+class FilterScreen(ModalScreen[list[str]]):
+    def __init__(self, categories: list[str], selected: set[str] = None):
+        super().__init__()
+        self.categories = sorted(list(set(categories)))
+        self.selected = selected or set()
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Label("Select Filter", id="question")
+
+            options = []
+            for opt in ["All", "Uncategorized", "Categorized"] + self.categories:
+                state = opt in self.selected
+                options.append((opt, opt, state))
+
+            yield SelectionList(*options, id="filter_options")
+
+            with Horizontal(id="buttons"):
+                yield Button("OK", variant="primary", id="ok")
+                yield Button("Cancel", variant="error", id="cancel")
+
+    def on_mount(self) -> None:
+        self.query_one(SelectionList).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "ok":
+            selection_list = self.query_one(SelectionList)
+            self.dismiss(selection_list.selected)
+        elif event.button.id == "cancel":
+            self.dismiss(None)
 
 class OverwriteConfirmScreen(ModalScreen[bool]):
     def compose(self) -> ComposeResult:

@@ -4,7 +4,7 @@ from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from budget import load_data, save_transactions
 from budget.transaction import Transaction
-from budget.screens import SaveScreen, LoadScreen, ClearDataConfirmScreen
+from budget.screens import SaveScreen, LoadScreen, ClearDataConfirmScreen, FilterScreen
 from budget.widgets import TransactionDetails, TransactionTable
 
 class BudgetApp(App):
@@ -18,7 +18,7 @@ class BudgetApp(App):
         Binding("n", "set_category('General')", "General"),
         Binding("h", "set_category('Holidays')", "Holidays"),
         Binding("p", "set_category('Pot')", "Pot"),
-        Binding("f", "toggle_filter_category", "Filter Category"),
+        Binding("f", "filter_menu", "Filter"),
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
     ]
@@ -28,7 +28,7 @@ class BudgetApp(App):
         self.file_path = file_path
         self.transactions = []
         self.displayed_transactions = []
-        self.filter_category = "all"
+        self.filter_categories = {"All"}
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -52,21 +52,41 @@ class BudgetApp(App):
         self._apply_filters()
 
     def _apply_filters(self) -> None:
-        if self.filter_category == "all":
+        # Normalize filter categories to lowercase for case-insensitive comparison
+        # Keep special keys as is or handle them specifically
+        filters = {f.lower() for f in self.filter_categories}
+
+        if "all" in filters:
             self.displayed_transactions = self.transactions
-        elif self.filter_category == "uncategorized":
-            self.displayed_transactions = [t for t in self.transactions if not t.category()]
-        elif self.filter_category == "categorized":
-            self.displayed_transactions = [t for t in self.transactions if t.category()]
+            self.query_one(TransactionTable).load_data(self.displayed_transactions)
+            return
+
+        self.displayed_transactions = []
+        for trx in self.transactions:
+            cat = trx.category()
+            if "uncategorized" in filters and not cat:
+                self.displayed_transactions.append(trx)
+                continue
+            if "categorized" in filters and cat:
+                self.displayed_transactions.append(trx)
+                continue
+            if cat.lower() in filters:
+                self.displayed_transactions.append(trx)
+                continue
 
         self.query_one(TransactionTable).load_data(self.displayed_transactions)
 
-    def action_toggle_filter_category(self) -> None:
-        modes = ["all", "uncategorized", "categorized"]
-        current_index = modes.index(self.filter_category)
-        self.filter_category = modes[(current_index + 1) % len(modes)]
-        self.notify(f"Filter: {self.filter_category}")
-        self._apply_filters()
+    def action_filter_menu(self) -> None:
+        # Collect unique categories
+        categories = [t.category() for t in self.transactions if t.category()]
+
+        def check_filter(result: list[str] | None) -> None:
+            if result is not None:
+                self.filter_categories = set(result)
+                self.notify(f"Filter: {', '.join(self.filter_categories)}")
+                self._apply_filters()
+
+        self.push_screen(FilterScreen(categories, self.filter_categories), check_filter)
 
     def on_data_table_row_highlighted(self, _event: DataTable.RowHighlighted) -> None:
         """Updates the sidebar using the row key from the highlight event."""
