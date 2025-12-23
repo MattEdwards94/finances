@@ -40,7 +40,8 @@ Testing
 
 Code Style
 
-- **Linting**: The project enforces high code quality. Run `pylint` on modified files and aim for a 10/10 score.
+- **Linting**: The project enforces high code quality. 
+  - You MUST run `pylint` on modified files and achieve a 10/10 score.
 - Lines in markdown files should be limited to about 100 chars, with a hard limit at 120.
 
 Git / Repository rules for agents
