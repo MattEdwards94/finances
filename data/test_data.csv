@@ -1,0 +1,7 @@
+Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In
+tx_0000Aabcdefghijklmnopq,28/07/2025,17:02:07,Card payment,Dott,🚲,Transport,-5.18,GBP,-5.18,GBP,,Amsterdam,,Dott scooter ride,,-5.18,
+tx_0000Abbcdefghijklmnopq,28/07/2025,19:22:02,Monzo-to-Monzo,Friend,,Transfers,1024.00,GBP,1024.00,GBP,"Trip money",,,,,,1024.00
+tx_0000Acbcdefghijklmnopq,29/07/2025,06:51:34,Card payment,Amazon,📦,General,-35.66,GBP,-35.66,GBP,Dog bed & treats ,,,AMZNMktplace           amazon.co.uk  GBR,,-35.66,
+tx_0000Adbcdefghijklmnopq,29/07/2025,06:51:56,Pot transfer,The Pot Pot,,Transfers,35.66,GBP,35.66,GBP,Dog bed & treats ,,,,,,35.66
+tx_0000Aebcdefghijklmnopq,29/07/2025,10:20:13,Card payment,Sainsbury’s,🍏,Groceries,-85.39,GBP,-85.39,GBP,,Bristol,,SAINSBURYS,,-85.39,
+tx_0000Afbcdefghijklmnopq,31/07/2025,21:59:19,Card payment,Festival Bars,🍽,Entertainment,-7.20,GBP,-7.20,GBP,,London,,FESTIVAL BARS          LONDON        GBR,,-7.20,
