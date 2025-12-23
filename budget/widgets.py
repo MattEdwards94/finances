@@ -36,7 +36,7 @@ class TransactionTable(DataTable):
 
     def get_current_transaction_index(self) -> int:
         if self.row_count == 0:
-             raise ValueError("No rows in the table")
+            raise ValueError("No rows in the table")
         row_key = self.coordinate_to_cell_key(self.cursor_coordinate).row_key
         return int(row_key.value)
 
