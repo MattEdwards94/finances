@@ -102,3 +102,27 @@ async def test_transaction_table_update_row():
         table.update_current_row(trx)
 
         assert table.get_cell_at(Coordinate(0, 5)) == "New Cat"
+
+@pytest.mark.asyncio
+async def test_transaction_table_vim_navigation():
+    app = TransactionTableApp()
+    async with app.run_test() as pilot:
+        table = app.query_one(TransactionTable)
+
+        # Load some data
+        trxs = [Transaction(RawTransaction(utils.mock_raw_trx_data())) for _ in range(3)]
+        table.load_data(trxs)
+
+        # Ensure focus (load_data focuses it, but good to be sure)
+        table.focus()
+
+        # Initial pos
+        assert table.cursor_coordinate.row == 0
+
+        # Press j -> down
+        await pilot.press("j")
+        assert table.cursor_coordinate.row == 1
+
+        # Press k -> up
+        await pilot.press("k")
+        assert table.cursor_coordinate.row == 0

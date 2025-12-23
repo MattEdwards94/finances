@@ -1,6 +1,7 @@
 from textual.app import ComposeResult
 from textual.widgets import Label, Static, DataTable
 from textual.containers import Vertical
+from textual.binding import Binding
 from budget.transaction import Transaction
 
 FIELDS_TO_DISPLAY = [
@@ -13,6 +14,11 @@ FIELDS_TO_DISPLAY = [
 ]
 
 class TransactionTable(DataTable):
+    BINDINGS = [
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+    ]
+
     def on_mount(self) -> None:
         self.zebra_stripes = True
         self.cursor_type = "row"
