@@ -24,6 +24,11 @@ class RawTransaction:
     def __str__(self) -> str:
         return f"name={self.name():20s}, amount={self.amount():11,.2f}, date={self.date():%d-%m-%Y}, id={self.id()}"
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, RawTransaction):
+            return NotImplemented
+        return self._raw == other._raw
+
     def id(self) -> str:
         return self._raw["Transaction ID"].strip()
 
@@ -72,13 +77,13 @@ class RawTransaction:
 
     def address(self) -> str:
         return self._raw["Address"].strip()
-    
+
     def receipt(self) -> str:
         return self._raw["Receipt"].strip()
-    
+
     def description(self) -> str:
         return self._raw["Description"].strip()
-    
+
     def category_split(self) -> str:
         return self._raw["Category split"].strip()
 

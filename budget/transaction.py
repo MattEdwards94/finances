@@ -7,35 +7,63 @@ from budget import common
 class Transaction:
     fields_to_persist = [
         "excluded",
+        "category",
+        "status",
     ]
 
     def __init__(self, raw_transaction: RawTransaction, processed_columns: dict = {}):
         self.raw = raw_transaction
 
         # Processed fields
-        self.excluded: bool = False
+        self._excluded: bool = False
+        self._category: str = ""
+        self._status: str = ""
 
-        # Update with any provided processed columns
-        for field, value in processed_columns.items():
-            if field not in self.fields_to_persist:
-                raise ValueError(f"Unknown processed field: {field}")
-            setattr(self, field, value)
+        if "excluded" in processed_columns:
+            self._excluded = bool(processed_columns["excluded"])
+        if "category" in processed_columns:
+            self._category = processed_columns["category"]
+        if "status" in processed_columns:
+            self._status = processed_columns["status"]
 
-    def to_dict(self) -> dict:
+    def __eq__(self, other):
+        if not isinstance(other, Transaction):
+            return NotImplemented
+        return self.raw == other.raw and all(
+            getattr(self, field)() == getattr(other, field)()
+            for field in self.fields_to_persist
+        )
+
+    def to_prefixed_dict(self) -> dict:
         """
-        Exports the transaction to a dictionary suitable for CSV writing, checking for
-        any possbile field conflicts.
+        Exports the transaction to a dictionary suitable for CSV writing.
+        Processed fields are prefixed with 'bt_'.
         """
         data = self.raw._raw.copy()
 
         for field in self.fields_to_persist:
-            # check it doesn't conflict with raw data fields
-            if field in common.EXPECTED_RAW_FIELDS:
-                raise ValueError(f"Processed field '{field}' conflicts with raw data fields.")
-            # add the data to the dict
-            data[field] = getattr(self, field)
+            # add the data to the dict with prefix
+            data[f"bt_{field}"] = getattr(self, field)()
 
         return data
+
+    def category(self):
+        return self._category
+
+    def status(self):
+        return self._status
+
+    def excluded(self):
+        return self._excluded
+
+    def set_category(self, category: str):
+        self._category = category
+
+    def set_status(self, status: str):
+        self._status = status
+
+    def set_excluded(self, excluded: bool):
+        self._excluded = excluded
 
     def id(self):
         return self.raw.id()
@@ -49,9 +77,6 @@ class Transaction:
     def name(self):
         return self.raw.name()
 
-    def category(self):
-        return self.raw.category()
-
     def amount(self):
         return self.raw.amount()
 
@@ -61,11 +86,12 @@ class Transaction:
 def save_transactions(filename: str, transactions: List[Transaction]):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
         # Combine raw fields and processed fields
-        fieldnames = common.EXPECTED_RAW_FIELDS + Transaction.fields_to_persist
+        processed_fields = [f"bt_{f}" for f in Transaction.fields_to_persist]
+        fieldnames = common.EXPECTED_RAW_FIELDS + processed_fields
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
         for trx in transactions:
-            writer.writerow(trx.to_dict())
+            writer.writerow(trx.to_prefixed_dict())
 
 

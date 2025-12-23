@@ -23,12 +23,17 @@ def load_data(csv_filename: str) -> List[Transaction]:
             raise ValueError(f"Missing fields: {', '.join(missing)}")
 
         # Identify processed columns
-        processed_columns = [f for f in reader.fieldnames if f not in EXPECTED_RAW_FIELDS]
+        processed_columns_map = {}
+        for f in reader.fieldnames:
+            if f.startswith("bt_"):
+                processed_columns_map[f] = f[3:]
 
         for row in reader:
             # Split raw and processed data
             raw_data = {k: row[k] for k in EXPECTED_RAW_FIELDS}
-            processed_data = {k: row[k] for k in processed_columns}
+            processed_data = {}
+            for csv_col, internal_field in processed_columns_map.items():
+                processed_data[internal_field] = row[csv_col]
 
             rt = RawTransaction(raw_data)
             trx = Transaction(rt, processed_data)
