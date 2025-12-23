@@ -66,10 +66,14 @@ class OverwriteConfirmScreen(ModalScreen[bool]):
         else:
             self.dismiss(False)
 
-class ClearDataConfirmScreen(ModalScreen[str]):
+class SaveChangesConfirmScreen(ModalScreen[str]):
+    def __init__(self, message: str = "Save changes?"):
+        super().__init__()
+        self.message = message
+
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
-            yield Label("Save before clearing?", id="question")
+            yield Label(self.message, id="question")
             with Horizontal(id="buttons"):
                 yield Button("Yes", variant="primary", id="yes")
                 yield Button("No", variant="error", id="no")

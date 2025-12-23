@@ -1,7 +1,8 @@
 import unittest.mock
 import pytest
 from textual.app import App
-from budget.screens import OverwriteConfirmScreen, ClearDataConfirmScreen, LoadScreen, SaveScreen
+from textual.widgets import Label
+from budget.screens import OverwriteConfirmScreen, SaveChangesConfirmScreen, LoadScreen, SaveScreen
 
 class ScreenTestApp(App):
     def __init__(self, screen_to_test):
@@ -32,28 +33,39 @@ async def test_overwrite_confirm_screen_no():
         assert app.result is False
 
 @pytest.mark.asyncio
-async def test_clear_data_confirm_screen_yes():
-    screen = ClearDataConfirmScreen()
+async def test_save_changes_confirm_screen_yes():
+    screen = SaveChangesConfirmScreen()
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#yes")
         assert app.result == "yes"
 
 @pytest.mark.asyncio
-async def test_clear_data_confirm_screen_no():
-    screen = ClearDataConfirmScreen()
+async def test_save_changes_confirm_screen_no():
+    screen = SaveChangesConfirmScreen()
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#no")
         assert app.result == "no"
 
 @pytest.mark.asyncio
-async def test_clear_data_confirm_screen_cancel():
-    screen = ClearDataConfirmScreen()
+async def test_save_changes_confirm_screen_cancel():
+    screen = SaveChangesConfirmScreen()
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#cancel")
         assert app.result == "cancel"
+
+@pytest.mark.asyncio
+async def test_save_changes_confirm_screen_message():
+    screen = SaveChangesConfirmScreen("Custom Message?")
+    app = ScreenTestApp(screen)
+    async with app.run_test() as pilot:
+        # Use pilot.app.screen to get the active screen
+        # Label.render() returns the renderable (usually Text object or string)
+        assert "Custom Message?" in str(pilot.app.screen.query_one("#question", Label).render())
+        await pilot.click("#yes")
+        assert app.result == "yes"
 
 @pytest.mark.asyncio
 async def test_load_screen_cancel():

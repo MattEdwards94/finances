@@ -4,7 +4,7 @@ from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from budget import load_data, save_transactions
 from budget.transaction import Transaction
-from budget.screens import SaveScreen, LoadScreen, ClearDataConfirmScreen, FilterScreen
+from budget.screens import SaveScreen, LoadScreen, SaveChangesConfirmScreen, FilterScreen
 from budget.widgets import TransactionDetails, TransactionTable
 
 class BudgetApp(App):
@@ -21,6 +21,7 @@ class BudgetApp(App):
         Binding("f", "filter_menu", "Filter"),
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
+        Binding("q", "quit", "Quit"),
     ]
 
     def __init__(self, file_path: str | None = None):
@@ -29,6 +30,7 @@ class BudgetApp(App):
         self.transactions = []
         self.displayed_transactions = []
         self.filter_categories = {"All"}
+        self.unsaved_changes = False
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -45,6 +47,7 @@ class BudgetApp(App):
     def load_transactions(self, file_path: str) -> None:
         try:
             self.transactions = load_data(file_path)
+            self.unsaved_changes = False
         except (ValueError, IOError) as e:
             self.notify(f"Error loading file: {e}", severity="error")
             return
@@ -102,6 +105,7 @@ class BudgetApp(App):
 
         trx = self._get_trx_for_cursor()
         trx.set_category(category)
+        self.unsaved_changes = True
 
         self._update_row()
 
@@ -109,6 +113,7 @@ class BudgetApp(App):
         def check_save(filename: str | None) -> None:
             if filename:
                 save_transactions(filename, self.transactions)
+                self.unsaved_changes = False
                 self.notify(f"Saved to {filename}")
 
         self.push_screen(SaveScreen(), check_save)
@@ -128,7 +133,7 @@ class BudgetApp(App):
                 self._clear_internal()
                 self._show_load_screen()
 
-        self.push_screen(ClearDataConfirmScreen(), check_clear)
+        self.push_screen(SaveChangesConfirmScreen("Save before loading?"), check_clear)
 
     def _show_load_screen(self) -> None:
         def check_load(filename: str | None) -> None:
@@ -152,12 +157,13 @@ class BudgetApp(App):
             else:
                 self._clear_internal()
 
-        self.push_screen(ClearDataConfirmScreen(), check_clear)
+        self.push_screen(SaveChangesConfirmScreen("Save before clearing?"), check_clear)
 
     def _save_and_clear(self, next_action=None):
         def after_save(filename: str | None) -> None:
             if filename:
                 save_transactions(filename, self.transactions)
+                self.unsaved_changes = False
                 self.notify(f"Saved to {filename}")
                 self._clear_internal()
                 if next_action:
@@ -171,7 +177,28 @@ class BudgetApp(App):
         self.displayed_transactions = []
         self.query_one(TransactionTable).clear()
         self.query_one(TransactionDetails).clear_transaction()
+        self.unsaved_changes = False
         self.notify("Data cleared")
+
+    async def action_quit(self) -> None:
+        if self.unsaved_changes:
+            def check_quit(response: str) -> None:
+                if response == "yes":
+                    def after_save(filename: str | None) -> None:
+                        if filename:
+                            save_transactions(filename, self.transactions)
+                            self.unsaved_changes = False
+                            self.notify(f"Saved to {filename}")
+                            self.exit()
+
+                    self.push_screen(SaveScreen(), after_save)
+                elif response == "no":
+                    self.exit()
+                # cancel: do nothing
+
+            self.push_screen(SaveChangesConfirmScreen("Save changes before exiting?"), check_quit)
+        else:
+            self.exit()
 
     def _get_trx_for_cursor(self) -> Transaction:
         """
