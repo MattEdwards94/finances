@@ -18,6 +18,7 @@ class BudgetApp(App):
         Binding("n", "set_category('General')", "General"),
         Binding("h", "set_category('Holidays')", "Holidays"),
         Binding("p", "set_category('Pot')", "Pot"),
+        Binding("f", "toggle_filter_category", "Filter Category"),
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
         Binding("c", "clear_data", "Clear"),
@@ -27,6 +28,8 @@ class BudgetApp(App):
         super().__init__()
         self.file_path = file_path
         self.transactions = []
+        self.displayed_transactions = []
+        self.filter_category = "all"
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -41,18 +44,34 @@ class BudgetApp(App):
             self.load_transactions(self.file_path)
 
     def load_transactions(self, file_path: str) -> None:
-        table = self.query_one(TransactionTable)
         try:
             self.transactions = load_data(file_path)
         except (ValueError, IOError) as e:
             self.notify(f"Error loading file: {e}", severity="error")
             return
 
-        table.load_data(self.transactions)
+        self._apply_filters()
+
+    def _apply_filters(self) -> None:
+        if self.filter_category == "all":
+            self.displayed_transactions = self.transactions
+        elif self.filter_category == "uncategorized":
+            self.displayed_transactions = [t for t in self.transactions if not t.category()]
+        elif self.filter_category == "categorized":
+            self.displayed_transactions = [t for t in self.transactions if t.category()]
+
+        self.query_one(TransactionTable).load_data(self.displayed_transactions)
+
+    def action_toggle_filter_category(self) -> None:
+        modes = ["all", "uncategorized", "categorized"]
+        current_index = modes.index(self.filter_category)
+        self.filter_category = modes[(current_index + 1) % len(modes)]
+        self.notify(f"Filter: {self.filter_category}")
+        self._apply_filters()
 
     def on_data_table_row_highlighted(self, _event: DataTable.RowHighlighted) -> None:
         """Updates the sidebar using the row key from the highlight event."""
-        if not self.transactions:
+        if not self.displayed_transactions:
             return
         trx = self._get_trx_for_cursor()
         self._update_sidebar(trx)
@@ -115,6 +134,7 @@ class BudgetApp(App):
 
     def _clear_internal(self):
         self.transactions = []
+        self.displayed_transactions = []
         self.query_one(TransactionTable).clear()
         self.query_one(TransactionDetails).clear_transaction()
         self.notify("Data cleared")
@@ -125,7 +145,7 @@ class BudgetApp(App):
         """
         table = self.query_one(TransactionTable)
         index = table.get_current_transaction_index()
-        return self.transactions[index]
+        return self.displayed_transactions[index]
 
     def _update_row(self) -> None:
         """
