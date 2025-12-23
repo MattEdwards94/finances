@@ -1,5 +1,6 @@
+from pathlib import Path
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Label, Static, Input, Button
+from textual.widgets import Header, Footer, DataTable, Label, Static, Input, Button, DirectoryTree
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from textual.screen import ModalScreen
@@ -15,10 +16,27 @@ FIELDS_TO_DISPLAY = [
     "category",
 ]
 
+class OverwriteConfirmScreen(ModalScreen[bool]):
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Label("File already exists. Overwrite?", id="question")
+            with Horizontal(id="buttons"):
+                yield Button("Yes", variant="primary", id="yes")
+                yield Button("No", variant="error", id="no")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "yes":
+            self.dismiss(True)
+        else:
+            self.dismiss(False)
+
 class SaveScreen(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
-            yield Label("Save to file:", id="question")
+            with Horizontal(classes="header"):
+                yield Label("Select folder:", id="question")
+                yield Button("Up", id="up", variant="primary")
+            yield DirectoryTree(str(Path.home() / "budget_data"))
             yield Input(placeholder="Enter filename", id="filename")
             with Horizontal(id="buttons"):
                 yield Button("Save", variant="primary", id="save")
@@ -27,15 +45,46 @@ class SaveScreen(ModalScreen[str]):
     def on_mount(self) -> None:
         self.query_one(Input).focus()
 
+    def on_directory_tree_directory_selected(self, event: DirectoryTree.DirectorySelected) -> None:
+        input_widget = self.query_one(Input)
+        input_widget.value = str(event.path) + "/"
+        input_widget.focus()
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected) -> None:
+        input_widget = self.query_one(Input)
+        input_widget.value = str(event.path)
+        input_widget.focus()
+
+    def handle_save(self):
+        input_widget = self.query_one(Input)
+        filename = input_widget.value
+        if not filename:
+            return
+
+        if Path(filename).exists():
+            def check_overwrite(should_overwrite: bool) -> None:
+                if should_overwrite:
+                    self.dismiss(filename)
+                # else do nothing, stay on SaveScreen
+
+            self.app.push_screen(OverwriteConfirmScreen(), check_overwrite)
+        else:
+            self.dismiss(filename)
+
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
-            input_widget = self.query_one(Input)
-            self.dismiss(input_widget.value)
-        else:
+            self.handle_save()
+        elif event.button.id == "up":
+            tree = self.query_one(DirectoryTree)
+            current = Path(tree.path).resolve()
+            parent = current.parent
+            tree.path = str(parent)
+            tree.reload()
+        elif event.button.id == "cancel":
             self.dismiss(None)
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        self.dismiss(event.value)
+    def on_input_submitted(self, _event: Input.Submitted) -> None:
+        self.handle_save()
 
 class BudgetApp(App):
     CSS_PATH = "styles/style.tcss"

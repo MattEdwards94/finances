@@ -31,8 +31,24 @@ SaveScreen {
     padding: 1 2;
 }
 
-#question {
+DirectoryTree {
+    height: 10;
+    border: solid $secondary;
     margin-bottom: 1;
+}
+
+.header {
+    height: auto;
+    margin-bottom: 1;
+    align: left middle;
+}
+
+#up {
+    margin-left: 2;
+}
+
+#question {
+    margin-bottom: 0;
 }
 
 #buttons {
