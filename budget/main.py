@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Label
+from textual.widgets import Header, Footer, DataTable, Label, Static
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from budget import load_data
@@ -109,8 +109,8 @@ class BudgetApp(App):
         self._update_sidebar(trx)
 
     def _update_sidebar(self, trx: Transaction) -> None:
-        self.query_one("#det-desc").update(trx.raw.name())
-        self.query_one("#det-amt").update(str(trx.raw.amount()))
-        self.query_one("#det-category").update(trx.category())
-        self.query_one("#det-status").update(trx.status())
+        self.query_one("#det-desc", Static).update(trx.raw.name())
+        self.query_one("#det-amt", Static).update(str(trx.raw.amount()))
+        self.query_one("#det-category", Static).update(trx.category())
+        self.query_one("#det-status", Static).update(trx.status())
 
