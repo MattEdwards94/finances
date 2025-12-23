@@ -1,9 +1,18 @@
 from pathlib import Path
 from textual.app import ComposeResult
 from textual.widgets import Label, Input, Button, DirectoryTree, SelectionList
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
 
+# pylint: disable=too-many-ancestors
+class BudgetSelectionList(SelectionList):
+    BINDINGS = [
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+    ]
+
+# pylint: disable=too-many-ancestors
 class FilterScreen(ModalScreen[list[str]]):
     def __init__(self, categories: list[str], selected: set[str] = None):
         super().__init__()
@@ -19,22 +28,30 @@ class FilterScreen(ModalScreen[list[str]]):
                 state = opt in self.selected
                 options.append((opt, opt, state))
 
-            yield SelectionList(*options, id="filter_options")
+            yield BudgetSelectionList(*options, id="filter_options")
 
             with Horizontal(id="buttons"):
                 yield Button("OK", variant="primary", id="ok")
                 yield Button("Cancel", variant="error", id="cancel")
 
     def on_mount(self) -> None:
-        self.query_one(SelectionList).focus()
+        self.query_one(BudgetSelectionList).focus()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "ok":
-            selection_list = self.query_one(SelectionList)
+            selection_list = self.query_one(BudgetSelectionList)
             self.dismiss(selection_list.selected)
         elif event.button.id == "cancel":
             self.dismiss(None)
 
+# pylint: disable=too-many-ancestors
+class BudgetDirectoryTree(DirectoryTree):
+    BINDINGS = [
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+    ]
+
+# pylint: disable=too-many-ancestors
 class OverwriteConfirmScreen(ModalScreen[bool]):
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
@@ -72,7 +89,7 @@ class LoadScreen(ModalScreen[str]):
             with Horizontal(classes="header"):
                 yield Label("Select file to load:", id="question")
                 yield Button("Up", id="up", variant="primary")
-            yield DirectoryTree(str(Path.home() / "budget_data"))
+            yield BudgetDirectoryTree(str(Path.home() / "budget_data"))
             yield Input(placeholder="Enter filename", id="filename")
             with Horizontal(id="buttons"):
                 yield Button("Load", variant="primary", id="load")
@@ -113,7 +130,7 @@ class SaveScreen(ModalScreen[str]):
             with Horizontal(classes="header"):
                 yield Label("Select folder:", id="question")
                 yield Button("Up", id="up", variant="primary")
-            yield DirectoryTree(str(Path.home() / "budget_data"))
+            yield BudgetDirectoryTree(str(Path.home() / "budget_data"))
             yield Input(placeholder="Enter filename", id="filename")
             with Horizontal(id="buttons"):
                 yield Button("Save", variant="primary", id="save")

@@ -50,3 +50,7 @@ Git / Repository rules for agents
 - It is allowed (and encouraged) to inspect the repository state: 
     - run git status, git log, git show, or other read-only git commands to help analysis.
 - If a change is necessary, report the required change clearly rather than performing it.
+
+- **Testing**:
+  - Always write new tests when adding new features or fixing bugs.
+  - Ensure all tests pass before completing the task.
