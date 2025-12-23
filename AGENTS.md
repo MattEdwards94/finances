@@ -18,25 +18,29 @@ Architecture
     (e.g., `excluded`, categorization). This allows the original data to remain untouched while storing
     user-defined attributes.
 - **User Interface**:
-  - The application uses [Textual](https://textual.textualize.io/) for its TUI, defined in `budget/main.py`.
+  - The application uses [Textual](https://textual.textualize.io/) for its TUI.
+  - `budget/main.py`: Contains the main `BudgetApp` class and application logic.
+  - `budget/widgets.py`: Contains custom widgets like `TransactionTable` and `TransactionDetails`.
+  - `budget/screens.py`: Contains modal screens for interactions (Save, Load, Filter, Confirmations).
 
 Testing
 
-- This project uses pytest for tests located in the ./tests directory.
-- To run tests locally:
-  - Ensure you are in the repository root.
-  - Ensure you are in a venv. 
-    - If not, and the venv/ folder exists then `source venv/bin/activate`
-    - Otherwise create and activate a virtual environment: 
-        - `python3 -m venv venv/ && source .venv/bin/activate`
-        - `pip install -e .`
-  - Run tests: `pytest`
+- This project uses `pytest` and `pytest-asyncio` for tests located in the `./tests` directory.
+- **Running Tests**:
+  - Ensure you are in the repository root and have the virtual environment activated.
+  - Run: `pytest`
+- **Writing Tests**:
+  - Use `pytest.mark.asyncio` for async tests, especially those involving Textual apps.
+  - Use `textual.app.App.run_test()` context manager to interact with the app via `pilot`.
+  - Mock external dependencies (file I/O, `load_data`, `save_transactions`) using `unittest.mock`.
+  - Refer to `tests/test_app.py` or `tests/test_screens.py` for examples of testing UI flows.
 - **Test Data**:
   - Example data is located at `data/test_data.csv`. This file can be used when verifying changes or running
     the application in development.
 
 Code Style
 
+- **Linting**: The project enforces high code quality. Run `pylint` on modified files and aim for a 10/10 score.
 - Lines in markdown files should be limited to about 100 chars, with a hard limit at 120.
 
 Git / Repository rules for agents
