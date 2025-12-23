@@ -1,7 +1,7 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Static, Label
+from textual.widgets import Header, Footer, DataTable, Label
 from textual.containers import Horizontal, Vertical
-from budget import load_data, EXPECTED_RAW_FIELDS
+from budget import load_data
 
 class BudgetApp(App):
     CSS_PATH = "styles/style.tcss"
@@ -43,8 +43,7 @@ class BudgetApp(App):
         table = self.query_one(DataTable)
         # Get the row data using the row key
         row_data = table.get_row(event.row_key)
-        
+
         self.query_one("#det-desc").update(str(row_data[2]))
         self.query_one("#det-amt").update(str(row_data[3]))
         self.query_one("#det-status").update(str(row_data[1]))
-

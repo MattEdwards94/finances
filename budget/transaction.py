@@ -1,6 +1,5 @@
 import csv
-from dataclasses import dataclass
-from typing import Optional, List
+from typing import List
 from budget.raw_transaction import RawTransaction
 from budget import common
 
@@ -11,13 +10,16 @@ class Transaction:
         "status",
     ]
 
-    def __init__(self, raw_transaction: RawTransaction, processed_columns: dict = {}):
+    def __init__(self, raw_transaction: RawTransaction, processed_columns: dict = None):
         self.raw = raw_transaction
 
         # Processed fields
         self._excluded: bool = False
         self._category: str = ""
         self._status: str = ""
+
+        if processed_columns is None:
+            processed_columns = {}
 
         if "excluded" in processed_columns:
             self._excluded = bool(processed_columns["excluded"])
@@ -39,7 +41,7 @@ class Transaction:
         Exports the transaction to a dictionary suitable for CSV writing.
         Processed fields are prefixed with 'bt_'.
         """
-        data = self.raw._raw.copy()
+        data = self.raw.to_dict()
 
         for field in self.fields_to_persist:
             # add the data to the dict with prefix
@@ -93,5 +95,3 @@ def save_transactions(filename: str, transactions: List[Transaction]):
         writer.writeheader()
         for trx in transactions:
             writer.writerow(trx.to_prefixed_dict())
-
-

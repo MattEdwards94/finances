@@ -1,4 +1,3 @@
-import pytest
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
 from . import utils
@@ -6,9 +5,9 @@ from . import utils
 def test_initialization_defaults():
     row = utils.mock_raw_trx_data()
     raw_trx = RawTransaction(row)
-    
+
     trx = Transaction(raw_trx)
-    
+
     assert trx.raw == raw_trx
     assert trx.category() == ""
     assert trx.status() == ""
@@ -22,9 +21,9 @@ def test_initialization_with_processed_data():
         "status": "Reviewed",
         "excluded": True
     }
-    
+
     trx = Transaction(raw_trx, processed)
-    
+
     assert trx.category() == "Groceries"
     assert trx.status() == "Reviewed"
     assert trx.excluded() is True
@@ -32,11 +31,11 @@ def test_initialization_with_processed_data():
 def test_setters_update_state():
     row = utils.mock_raw_trx_data()
     trx = Transaction(RawTransaction(row))
-    
+
     trx.set_category("Utilities")
     trx.set_status("Pending")
     trx.set_excluded(True)
-    
+
     assert trx.category() == "Utilities"
     assert trx.status() == "Pending"
     assert trx.excluded() is True
@@ -44,7 +43,7 @@ def test_setters_update_state():
 def test_delegated_methods():
     row = utils.mock_raw_trx_data(Amount="-10.00", Name="Test Shop")
     trx = Transaction(RawTransaction(row))
-    
+
     assert trx.amount() == -10.00
     assert trx.name() == "Test Shop"
 
@@ -52,14 +51,14 @@ def test_equality():
     row = utils.mock_raw_trx_data()
     trx1 = Transaction(RawTransaction(row))
     trx2 = Transaction(RawTransaction(row))
-    
+
     # Initially equal
     assert trx1 == trx2
-    
+
     # Change processed field
     trx1.set_category("New Cat")
     assert trx1 != trx2
-    
+
     # Make them equal again
     trx2.set_category("New Cat")
     assert trx1 == trx2
@@ -69,9 +68,9 @@ def test_to_prefixed_dict():
     trx = Transaction(RawTransaction(row))
     trx.set_category("Food")
     trx.set_excluded(True)
-    
+
     data = trx.to_prefixed_dict()
-    
+
     assert data["bt_category"] == "Food"
     assert data["bt_excluded"] is True
     assert data["bt_status"] == ""

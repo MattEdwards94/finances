@@ -14,10 +14,10 @@ def load_data(csv_filename: str) -> List[Transaction]:
     rows: List[Transaction] = []
     with open(csv_filename, newline='', encoding='utf-8') as fh:
         reader = csv.DictReader(fh)
-        
+
         if not reader.fieldnames:
             raise ValueError("CSV file has no header")
-            
+
         missing = [f for f in EXPECTED_RAW_FIELDS if f not in reader.fieldnames]
         if missing:
             raise ValueError(f"Missing fields: {', '.join(missing)}")

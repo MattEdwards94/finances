@@ -1,9 +1,8 @@
 import datetime
 import pytest
 
-import budget
-from . import utils
 from budget.raw_transaction import RawTransaction
+from . import utils
 
 
 def test_can_create_raw_transaction():
@@ -11,7 +10,7 @@ def test_can_create_raw_transaction():
 
     trx = RawTransaction(row)
 
-    assert trx._raw == row
+    assert trx.to_dict() == row
 
 def test_date_iso_format():
     # Explicitly set the date so we can verify it

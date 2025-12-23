@@ -1,5 +1,5 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer, DataTable, Static, Label
+from textual.widgets import Header, Footer, DataTable, Label
 from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 
@@ -74,7 +74,7 @@ class SpendingSorter(App):
         table = self.query_one(DataTable)
         # Get the row data using the row index from the coordinate
         row_data = table.get_row_at(event.coordinate.row)
-        
+
         self.query_one("#det-desc").update(str(row_data[1]))
         self.query_one("#det-amt").update(str(row_data[2]))
         self.query_one("#det-status").update(str(row_data[3]))

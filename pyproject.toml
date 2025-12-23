@@ -15,7 +15,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = [
+    "pytest",
+    "pylint",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

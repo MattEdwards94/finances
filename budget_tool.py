@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-import sys
 
-from budget.import_data import load_data
 from budget.main import BudgetApp
 
 def parse_args():
@@ -16,7 +14,8 @@ def main():
 
     app = BudgetApp(file_path=args.file)
     app.run()
-    
+
+
 
     # trxs = load_data(args.file)
     # if not trxs:

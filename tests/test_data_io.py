@@ -1,6 +1,6 @@
 import csv
-import pytest
 from pathlib import Path
+import pytest
 
 import budget
 from . import utils
@@ -70,7 +70,7 @@ def test_load_data_with_prefixes(tmp_path):
     assert trx.raw == budget.RawTransaction(utils.mock_raw_trx_data())
     assert trx.category() == "Food"
     assert trx.status() == "Reviewed"
-    assert trx.excluded() == True
+    assert trx.excluded() is True
 
 def test_save_to_csv():
     row_data = utils.mock_raw_trx_data()
@@ -118,5 +118,4 @@ def test_round_trip(tmp_path):
 
     assert loaded_trx.category() == "RoundTrip"
     assert loaded_trx.status() == "Done"
-    assert loaded_trx.excluded() == True
-
+    assert loaded_trx.excluded() is True
