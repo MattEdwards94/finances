@@ -68,7 +68,6 @@ async def test_save_changes_confirm_screen_message():
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         # Use pilot.app.screen to get the active screen
-        # Label.render() returns the renderable (usually Text object or string)
         assert "Custom Message?" in str(pilot.app.screen.query_one("#question", Label).render())
         await pilot.click("#yes")
         assert app.result == "yes"
@@ -123,7 +122,6 @@ async def test_save_screen_overwrite_existing_file():
             await pilot.click("#save")
 
             # Should now be on OverwriteConfirmScreen
-            # We can check if the top screen is OverwriteConfirmScreen
             assert isinstance(app.screen, OverwriteConfirmScreen)
 
             # Click Yes to confirm overwrite
@@ -149,8 +147,7 @@ async def test_save_screen_overwrite_deny():
             # Click No to deny overwrite
             await pilot.click("#no")
 
-            # Should be back on SaveScreen (or rather, SaveScreen is still top)
-            # Note: OverwriteConfirmScreen is dismissed, so SaveScreen should be active
+            # Should be back on SaveScreen
             assert isinstance(app.screen, SaveScreen)
 
             # Result should still be None (not dismissed)

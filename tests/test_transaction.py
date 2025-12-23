@@ -10,6 +10,7 @@ def test_initialization_defaults():
 
     assert trx.raw == raw_trx
     assert trx.category() == ""
+    assert trx.pot_category() == ""
     assert trx.status() == ""
     assert trx.excluded() is False
 
@@ -18,6 +19,7 @@ def test_initialization_with_processed_data():
     raw_trx = RawTransaction(row)
     processed = {
         "category": "Groceries",
+        "pot_category": "Food",
         "status": "Reviewed",
         "excluded": True
     }
@@ -25,6 +27,7 @@ def test_initialization_with_processed_data():
     trx = Transaction(raw_trx, processed)
 
     assert trx.category() == "Groceries"
+    assert trx.pot_category() == "Food"
     assert trx.status() == "Reviewed"
     assert trx.excluded() is True
 
@@ -33,10 +36,12 @@ def test_setters_update_state():
     trx = Transaction(RawTransaction(row))
 
     trx.set_category("Utilities")
+    trx.set_pot_category("Bills")
     trx.set_status("Pending")
     trx.set_excluded(True)
 
     assert trx.category() == "Utilities"
+    assert trx.pot_category() == "Bills"
     assert trx.status() == "Pending"
     assert trx.excluded() is True
 
@@ -67,11 +72,13 @@ def test_to_prefixed_dict():
     row = utils.mock_raw_trx_data()
     trx = Transaction(RawTransaction(row))
     trx.set_category("Food")
+    trx.set_pot_category("Groceries")
     trx.set_excluded(True)
 
     data = trx.to_prefixed_dict()
 
     assert data["bt_category"] == "Food"
+    assert data["bt_pot_category"] == "Groceries"
     assert data["bt_excluded"] is True
     assert data["bt_status"] == ""
     # Check a raw field exists

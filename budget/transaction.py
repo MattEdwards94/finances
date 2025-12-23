@@ -7,6 +7,7 @@ class Transaction:
     fields_to_persist = [
         "excluded",
         "category",
+        "pot_category",
         "status",
     ]
 
@@ -16,6 +17,7 @@ class Transaction:
         # Processed fields
         self._excluded: bool = False
         self._category: str = ""
+        self._pot_category: str = ""
         self._status: str = ""
 
         if processed_columns is None:
@@ -25,6 +27,8 @@ class Transaction:
             self._excluded = bool(processed_columns["excluded"])
         if "category" in processed_columns:
             self._category = processed_columns["category"]
+        if "pot_category" in processed_columns:
+            self._pot_category = processed_columns["pot_category"]
         if "status" in processed_columns:
             self._status = processed_columns["status"]
 
@@ -52,6 +56,9 @@ class Transaction:
     def category(self):
         return self._category
 
+    def pot_category(self):
+        return self._pot_category
+
     def status(self):
         return self._status
 
@@ -60,6 +67,9 @@ class Transaction:
 
     def set_category(self, category: str):
         self._category = category
+
+    def set_pot_category(self, pot_category: str):
+        self._pot_category = pot_category
 
     def set_status(self, status: str):
         self._status = status

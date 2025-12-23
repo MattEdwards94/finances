@@ -59,6 +59,7 @@ def test_load_data_with_prefixes(tmp_path):
     """
     row_data = utils.mock_raw_trx_data()
     row_data["bt_category"] = "Food"
+    row_data["bt_pot_category"] = "Groceries"
     row_data["bt_status"] = "Reviewed"
     row_data["bt_excluded"] = "True"
     csv_file = create_csv(tmp_path, list(row_data.keys()), [row_data])
@@ -69,6 +70,7 @@ def test_load_data_with_prefixes(tmp_path):
     trx = transactions[0]
     assert trx.raw == budget.RawTransaction(utils.mock_raw_trx_data())
     assert trx.category() == "Food"
+    assert trx.pot_category() == "Groceries"
     assert trx.status() == "Reviewed"
     assert trx.excluded() is True
 
@@ -77,6 +79,7 @@ def test_save_to_csv():
     rt = budget.RawTransaction(row_data)
     trx = budget.Transaction(rt)
     trx.set_category("Some Category")
+    trx.set_pot_category("Some Pot Category")
     trx.set_status("Some Status")
     trx.set_excluded(False)
 
@@ -92,12 +95,14 @@ def test_save_to_csv():
     for field in budget.EXPECTED_RAW_FIELDS:
         assert field in headers
     assert "bt_category" in headers
+    assert "bt_pot_category" in headers
     assert "bt_status" in headers
     assert "bt_excluded" in headers
 
     for field in budget.EXPECTED_RAW_FIELDS:
         assert data_row[field] == row_data[field]
     assert data_row["bt_category"] == "Some Category"
+    assert data_row["bt_pot_category"] == "Some Pot Category"
     assert data_row["bt_status"] == "Some Status"
     assert data_row["bt_excluded"] == "False"
 
@@ -106,6 +111,7 @@ def test_round_trip(tmp_path):
     rt = budget.RawTransaction(row_data)
     trx = budget.Transaction(rt)
     trx.set_category("RoundTrip")
+    trx.set_pot_category("RoundTripPot")
     trx.set_status("Done")
     trx.set_excluded(True)
 
@@ -117,5 +123,6 @@ def test_round_trip(tmp_path):
     loaded_trx = loaded_trxs[0]
 
     assert loaded_trx.category() == "RoundTrip"
+    assert loaded_trx.pot_category() == "RoundTripPot"
     assert loaded_trx.status() == "Done"
     assert loaded_trx.excluded() is True

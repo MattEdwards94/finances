@@ -11,6 +11,7 @@ FIELDS_TO_DISPLAY = [
     "amount",
     "notes",
     "category",
+    "pot_category",
 ]
 
 class TransactionTable(DataTable):
@@ -24,6 +25,7 @@ class TransactionTable(DataTable):
         self.cursor_type = "row"
         self.add_columns("Date", "Type", "Name", "Amount", "Notes")
         self.add_column("Category", width=20)
+        self.add_column("Pot Category", width=20)
 
     def load_data(self, transactions: list[Transaction]) -> None:
         self.clear()
@@ -55,6 +57,8 @@ class TransactionDetails(Vertical):
         yield Label("--", id="det-amt")
         yield Label("Category:", classes="detail-label")
         yield Label("--", id="det-category")
+        yield Label("Pot Category:", classes="detail-label")
+        yield Label("--", id="det-pot-category")
         yield Label("Status:", classes="detail-label")
         yield Label("--", id="det-status")
 
@@ -62,10 +66,12 @@ class TransactionDetails(Vertical):
         self.query_one("#det-desc", Static).update(trx.raw.name())
         self.query_one("#det-amt", Static).update(str(trx.raw.amount()))
         self.query_one("#det-category", Static).update(trx.category())
+        self.query_one("#det-pot-category", Static).update(trx.pot_category())
         self.query_one("#det-status", Static).update(trx.status())
 
     def clear_transaction(self) -> None:
         self.query_one("#det-desc", Static).update("--")
         self.query_one("#det-amt", Static).update("--")
         self.query_one("#det-category", Static).update("--")
+        self.query_one("#det-pot-category", Static).update("--")
         self.query_one("#det-status", Static).update("--")

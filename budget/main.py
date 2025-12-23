@@ -4,7 +4,13 @@ from textual.containers import Horizontal, Vertical
 from textual.binding import Binding
 from budget import load_data, save_transactions
 from budget.transaction import Transaction
-from budget.screens import SaveScreen, LoadScreen, SaveChangesConfirmScreen, FilterScreen
+from budget.screens import (
+    SaveScreen,
+    LoadScreen,
+    SaveChangesConfirmScreen,
+    FilterScreen,
+    PotCategoryScreen,
+)
 from budget.widgets import TransactionDetails, TransactionTable
 
 class BudgetApp(App):
@@ -105,8 +111,19 @@ class BudgetApp(App):
 
         trx = self._get_trx_for_cursor()
         trx.set_category(category)
-        self.unsaved_changes = True
 
+        if category == "Pot":
+            def check_pot(result: str | None) -> None:
+                if result:
+                    trx.set_pot_category(result)
+                    self.unsaved_changes = True
+                    self._update_row()
+
+            self.push_screen(PotCategoryScreen(), check_pot)
+        else:
+            trx.set_pot_category("")
+
+        self.unsaved_changes = True
         self._update_row()
 
     def action_save_transactions(self) -> None:

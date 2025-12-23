@@ -54,9 +54,6 @@ async def test_load_flow_existing_data_no_save_then_load():
             assert not app.transactions
 
             # Proceed to load new file
-            # We need to mock load_data again or ensure it returns something for the new load
-            # But since we are mocking the same function, we can just check if it's called
-
             await pilot.click("#filename")
             await pilot.press("n", "e", "w", ".", "c", "s", "v")
             await pilot.click("#load")
