@@ -1,4 +1,9 @@
 
+import contextlib
+import unittest.mock
+from budget.main import BudgetApp
+from budget.transaction import Transaction
+from budget.raw_transaction import RawTransaction
 
 def mock_raw_trx_data(**overrides):
     """
@@ -26,3 +31,65 @@ def mock_raw_trx_data(**overrides):
     }
     row.update(overrides)
     return row
+
+@contextlib.asynccontextmanager
+async def run_app_with_mock_data(transactions=None, mock_save=False, mock_path_exists=None):
+    """
+    Runs the BudgetApp with mocked load_data.
+
+    Args:
+        transactions: List of Transaction objects to return from load_data.
+        mock_save: If True, mocks save_transactions.
+        mock_path_exists: If set (True/False), mocks pathlib.Path.exists.
+
+    Yields:
+        (app, pilot, save_mock)
+    """
+    if transactions is None:
+        transactions = []
+
+    with unittest.mock.patch("budget.main.load_data", return_value=transactions):
+
+        stack = contextlib.ExitStack()
+
+        save_mock_obj = None
+        if mock_save:
+            save_mock_obj = stack.enter_context(
+                unittest.mock.patch("budget.main.save_transactions")
+            )
+
+        if mock_path_exists is not None:
+            stack.enter_context(
+                unittest.mock.patch("pathlib.Path.exists", return_value=mock_path_exists)
+            )
+
+        with stack:
+            app = BudgetApp()
+            async with app.run_test() as pilot:
+                if transactions:
+                    app.load_transactions("dummy.csv")
+                yield app, pilot, save_mock_obj
+
+async def perform_save_flow(pilot, filename="save.csv"):
+    """Helper to perform the save flow in the UI."""
+    # Click Yes (want to save)
+    await pilot.click("#yes")
+    await pilot.pause()
+
+    # Enter filename and save
+    await pilot.click("#filename")
+    # We need to type the filename.
+    for char in filename:
+        await pilot.press(char)
+    await pilot.click("#save")
+    await pilot.pause()
+
+def mock_transactions_for_filtering():
+    """Returns a list of 3 transactions for filtering tests."""
+    t1 = Transaction(RawTransaction(mock_raw_trx_data(Name="T1")))
+    t1.set_category("Groceries")
+    t2 = Transaction(RawTransaction(mock_raw_trx_data(Name="T2")))
+    t2.set_category("Entertainment")
+    t3 = Transaction(RawTransaction(mock_raw_trx_data(Name="T3")))
+    t3.set_category("Transport")
+    return [t1, t2, t3]

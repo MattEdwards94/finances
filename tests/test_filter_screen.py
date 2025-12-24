@@ -1,56 +1,44 @@
-import unittest.mock
 import pytest
 from textual.widgets import SelectionList
-from budget.main import BudgetApp
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
 from budget.screens import FilterScreen
-from tests import utils
+from . import utils
 
 @pytest.mark.asyncio
 async def test_filter_screen_select_category():
     # Setup data
-    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
-    t1.set_category("Groceries")
-    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T2")))
-    t2.set_category("Entertainment")
-    t3 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T3")))
+    mock_trxs = utils.mock_transactions_for_filtering()
 
-    mock_trxs = [t1, t2, t3]
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        # Trigger filter menu
+        app.action_filter_menu()
+        await pilot.pause()
 
-    with unittest.mock.patch("budget.main.load_data", return_value=mock_trxs):
-        app = BudgetApp()
-        async with app.run_test() as pilot:
-            app.load_transactions("dummy.csv")
+        # Should be on FilterScreen
+        assert isinstance(app.screen, FilterScreen)
 
-            # Trigger filter menu
-            app.action_filter_menu()
-            await pilot.pause()
+        # Select "Groceries"
+        selection_list = app.screen.query_one(SelectionList)
 
-            # Should be on FilterScreen
-            assert isinstance(app.screen, FilterScreen)
+        # "All" should be selected initially (default)
+        assert "All" in selection_list.selected
 
-            # Select "Groceries"
-            selection_list = app.screen.query_one(SelectionList)
+        selection_list.deselect("All")
+        selection_list.select("Groceries")
 
-            # "All" should be selected initially (default)
-            assert "All" in selection_list.selected
+        # Click OK
+        await pilot.click("#ok")
+        await pilot.pause()
 
-            selection_list.deselect("All")
-            selection_list.select("Groceries")
+        # Should be back on main screen
+        assert not isinstance(app.screen, FilterScreen)
 
-            # Click OK
-            await pilot.click("#ok")
-            await pilot.pause()
-
-            # Should be back on main screen
-            assert not isinstance(app.screen, FilterScreen)
-
-            # Filter should be applied
-            assert "Groceries" in app.filter_categories
-            assert len(app.filter_categories) == 1
-            assert len(app.displayed_transactions) == 1
-            assert app.displayed_transactions[0].name() == "T1"
+        # Filter should be applied
+        assert "Groceries" in app.filter_categories
+        assert len(app.filter_categories) == 1
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T1"
 
 @pytest.mark.asyncio
 async def test_filter_screen_select_all():
@@ -59,30 +47,26 @@ async def test_filter_screen_select_all():
 
     mock_trxs = [t1]
 
-    with unittest.mock.patch("budget.main.load_data", return_value=mock_trxs):
-        app = BudgetApp()
-        async with app.run_test() as pilot:
-            app.load_transactions("dummy.csv")
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        # Set filter to something else first
+        app.filter_categories = {"Groceries"}
+        # pylint: disable=protected-access
+        app._apply_filters()
 
-            # Set filter to something else first
-            app.filter_categories = {"Groceries"}
-            # pylint: disable=protected-access
-            app._apply_filters()
+        app.action_filter_menu()
+        await pilot.pause()
 
-            app.action_filter_menu()
-            await pilot.pause()
+        # Select "All"
+        selection_list = app.screen.query_one(SelectionList)
 
-            # Select "All"
-            selection_list = app.screen.query_one(SelectionList)
+        # "Groceries" should be selected initially
+        assert "Groceries" in selection_list.selected
 
-            # "Groceries" should be selected initially
-            assert "Groceries" in selection_list.selected
+        selection_list.deselect("Groceries")
+        selection_list.select("All")
 
-            selection_list.deselect("Groceries")
-            selection_list.select("All")
+        await pilot.click("#ok")
+        await pilot.pause()
 
-            await pilot.click("#ok")
-            await pilot.pause()
-
-            assert "All" in app.filter_categories
-            assert len(app.displayed_transactions) == 1
+        assert "All" in app.filter_categories
+        assert len(app.displayed_transactions) == 1

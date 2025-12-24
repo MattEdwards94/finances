@@ -4,7 +4,7 @@ from textual.coordinate import Coordinate
 from budget.widgets import TransactionDetails, TransactionTable
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
-from tests import utils
+from . import utils
 
 class TransactionDetailsApp(App):
     def compose(self) -> ComposeResult:

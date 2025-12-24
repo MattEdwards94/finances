@@ -4,7 +4,7 @@ from budget.raw_transaction import RawTransaction
 from budget.main import BudgetApp
 from budget.widgets import TransactionTable
 from budget.screens import PotCategoryScreen
-from tests import utils
+from . import utils
 
 def create_dummy_transaction(trx_id="1", category="", pot_category=""):
     raw_data = utils.mock_raw_trx_data(**{"Transaction ID": trx_id})
