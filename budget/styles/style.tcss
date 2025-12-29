@@ -61,3 +61,11 @@ DirectoryTree {
 Button {
     margin-left: 1;
 }
+
+PotTransferSelectScreen {
+    align: center middle;
+}
+
+PotTransferSelectScreen #dialog {
+    width: 80;
+}

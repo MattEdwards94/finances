@@ -38,9 +38,12 @@ class TransactionTable(DataTable):
         self.focus()
 
     def update_current_row(self, trx: Transaction) -> None:
+        self.update_row_by_index(self.cursor_coordinate.row, trx)
+
+    def update_row_by_index(self, index: int, trx: Transaction) -> None:
         for col_index, field in enumerate(FIELDS_TO_DISPLAY):
             value = getattr(trx, field)()
-            self.update_cell_at((self.cursor_coordinate.row, col_index), value)
+            self.update_cell_at((index, col_index), value)
 
     def get_current_transaction_index(self) -> int:
         if self.row_count == 0:
@@ -51,6 +54,8 @@ class TransactionTable(DataTable):
 class TransactionDetails(Vertical):
     def compose(self) -> ComposeResult:
         yield Label("TRANSACTION DETAILS", id="sidebar-title")
+        yield Label("Date:", classes="detail-label")
+        yield Label("--", id="det-date")
         yield Label("Description:", classes="detail-label")
         yield Label("--", id="det-desc")
         yield Label("Amount:", classes="detail-label")
@@ -59,19 +64,33 @@ class TransactionDetails(Vertical):
         yield Label("--", id="det-category")
         yield Label("Pot Category:", classes="detail-label")
         yield Label("--", id="det-pot-category")
+        yield Label("Linked Transaction:", classes="detail-label")
+        yield Label("--", id="det-link")
         yield Label("Status:", classes="detail-label")
         yield Label("--", id="det-status")
 
-    def update_transaction(self, trx: Transaction) -> None:
+    def update_transaction(self, trx: Transaction, linked_trx: Transaction | None = None) -> None:
+        self.query_one("#det-date", Static).update(str(trx.date()))
         self.query_one("#det-desc", Static).update(trx.raw.name())
         self.query_one("#det-amt", Static).update(str(trx.raw.amount()))
         self.query_one("#det-category", Static).update(trx.category())
         self.query_one("#det-pot-category", Static).update(trx.pot_category())
+
+        if linked_trx:
+            link_text = f"{linked_trx.name()} ({linked_trx.amount()}) - {linked_trx.date()}"
+        elif trx.link():
+            link_text = f"ID: {trx.link()} (Not found)"
+        else:
+            link_text = "--"
+        self.query_one("#det-link", Static).update(link_text)
+
         self.query_one("#det-status", Static).update(trx.status())
 
     def clear_transaction(self) -> None:
+        self.query_one("#det-date", Static).update("--")
         self.query_one("#det-desc", Static).update("--")
         self.query_one("#det-amt", Static).update("--")
         self.query_one("#det-category", Static).update("--")
         self.query_one("#det-pot-category", Static).update("--")
+        self.query_one("#det-link", Static).update("--")
         self.query_one("#det-status", Static).update("--")

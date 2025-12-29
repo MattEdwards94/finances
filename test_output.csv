@@ -1,2 +1,2 @@
-Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In,bt_excluded,bt_category,bt_pot_category,bt_status
- tx123 ,28/07/2025,12:34:56,card,Coffee Shop,☕,eating_out,-3.50,GBP,-3.50,GBP,latte #coffee,123 Main St,,Coffee,,-3.50,,False,Some Category,Some Pot Category,Some Status
+Transaction ID,Date,Time,Type,Name,Emoji,Category,Amount,Currency,Local amount,Local currency,Notes and #tags,Address,Receipt,Description,Category split,Money Out,Money In,bt_excluded,bt_category,bt_pot_category,bt_status,bt_link
+ tx123 ,28/07/2025,12:34:56,card,Coffee Shop,☕,eating_out,-3.50,GBP,-3.50,GBP,latte #coffee,123 Main St,,Coffee,,-3.50,,False,Some Category,Some Pot Category,Some Status,

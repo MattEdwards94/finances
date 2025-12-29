@@ -9,6 +9,7 @@ class Transaction:
         "category",
         "pot_category",
         "status",
+        "link",
     ]
 
     def __init__(self, raw_transaction: RawTransaction, processed_columns: dict = None):
@@ -19,6 +20,7 @@ class Transaction:
         self._category: str = ""
         self._pot_category: str = ""
         self._status: str = ""
+        self._link: str = ""
 
         if processed_columns is None:
             processed_columns = {}
@@ -31,6 +33,8 @@ class Transaction:
             self._pot_category = processed_columns["pot_category"]
         if "status" in processed_columns:
             self._status = processed_columns["status"]
+        if "link" in processed_columns:
+            self._link = processed_columns["link"]
 
     def __eq__(self, other):
         if not isinstance(other, Transaction):
@@ -62,6 +66,9 @@ class Transaction:
     def status(self):
         return self._status
 
+    def link(self):
+        return self._link
+
     def excluded(self):
         return self._excluded
 
@@ -74,8 +81,18 @@ class Transaction:
     def set_status(self, status: str):
         self._status = status
 
+    def set_link(self, link: str):
+        self._link = link
+
     def set_excluded(self, excluded: bool):
         self._excluded = excluded
+
+    def clear_processed_fields(self):
+        self._excluded = False
+        self._category = ""
+        self._pot_category = ""
+        self._status = ""
+        self._link = ""
 
     def id(self):
         return self.raw.id()

@@ -83,3 +83,21 @@ def test_to_prefixed_dict():
     assert data["bt_status"] == ""
     # Check a raw field exists
     assert data["Name"] == row["Name"]
+
+def test_clear_processed_fields():
+    row = utils.mock_raw_trx_data()
+    trx = Transaction(RawTransaction(row))
+
+    trx.set_category("Food")
+    trx.set_pot_category("Groceries")
+    trx.set_status("Done")
+    trx.set_excluded(True)
+    trx.set_link("123")
+
+    trx.clear_processed_fields()
+
+    assert trx.category() == ""
+    assert trx.pot_category() == ""
+    assert trx.status() == ""
+    assert trx.excluded() is False
+    assert trx.link() == ""

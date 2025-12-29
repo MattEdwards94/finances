@@ -10,6 +10,7 @@ from budget.screens import (
     FilterScreen,
     PotCategoryScreen,
 )
+from budget.screens.pot_transfer import PotTransferSelectScreen
 from budget.widgets import TransactionDetails, TransactionTable
 
 class BudgetApp(App):
@@ -26,6 +27,7 @@ class BudgetApp(App):
         Binding("f", "filter_menu", "Filter"),
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
+        Binding("c", "clear_row_data", "Clear Row"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -116,12 +118,46 @@ class BudgetApp(App):
                 if result:
                     trx.set_pot_category(result)
                     self.unsaved_changes = True
+
+                    # Now ask for linked transaction
+                    def check_link(linked_id: str | None) -> None:
+                        if linked_id:
+                            trx.set_link(linked_id)
+                            linked_trx = self._find_transaction_by_id(linked_id)
+                            if linked_trx:
+                                linked_trx.set_category("Pot")
+                                linked_trx.set_pot_category(result)
+                                linked_trx.set_link(trx.id())
+                                self._refresh_transaction_row(linked_trx)
+
+                        self._update_row()
+
+                    self.push_screen(PotTransferSelectScreen(trx, self.transactions), check_link)
+                else:
                     self._update_row()
 
             self.push_screen(PotCategoryScreen(), check_pot)
         else:
             trx.set_pot_category("")
+            trx.set_link("")
+            self.unsaved_changes = True
+            self._update_row()
 
+    def action_clear_row_data(self) -> None:
+        table = self.query_one(TransactionTable)
+        if table.row_count == 0:
+            return
+
+        trx = self._get_trx_for_cursor()
+
+        # Handle unlinking if necessary
+        if trx.link():
+            linked_trx = self._find_transaction_by_id(trx.link())
+            if linked_trx:
+                linked_trx.set_link("")
+                self._refresh_transaction_row(linked_trx)
+
+        trx.clear_processed_fields()
         self.unsaved_changes = True
         self._update_row()
 
@@ -236,4 +272,18 @@ class BudgetApp(App):
         self._update_sidebar(trx)
 
     def _update_sidebar(self, trx: Transaction) -> None:
-        self.query_one(TransactionDetails).update_transaction(trx)
+        linked_trx = None
+        if trx.link():
+            linked_trx = self._find_transaction_by_id(trx.link())
+        self.query_one(TransactionDetails).update_transaction(trx, linked_trx)
+
+    def _refresh_transaction_row(self, trx: Transaction) -> None:
+        if trx in self.displayed_transactions:
+            index = self.displayed_transactions.index(trx)
+            self.query_one(TransactionTable).update_row_by_index(index, trx)
+
+    def _find_transaction_by_id(self, trx_id: str) -> Transaction | None:
+        for t in self.transactions:
+            if t.id() == trx_id:
+                return t
+        return None
