@@ -15,7 +15,7 @@ async def test_filter_toggle_logic():
     mock_trxs = [t1, t2]
 
     async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
-        # Default: All (2 items)
+        # Default: All (Active) (2 items)
         assert len(app.displayed_transactions) == 2
         assert app.query_one(TransactionTable).row_count == 2
 
@@ -38,8 +38,8 @@ async def test_filter_toggle_logic():
         assert app.displayed_transactions[0].name() == "Cat"
         assert app.query_one(TransactionTable).row_count == 1
 
-        # Filter -> All
-        app.filter_categories = {"All"}
+        # Filter -> All (Active)
+        app.filter_categories = {"All (Active)"}
         app._apply_filters()
         await pilot.pause()
 
@@ -108,7 +108,66 @@ async def test_multi_filter_logic():
         assert names == ["T1", "T3"]
 
 @pytest.mark.asyncio
-async def test_case_insensitive_filtering():
+async def test_unlinked_pot_filter():
+    # Setup data
+    # T1: Pot, Linked
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
+    t1.set_category("Pot")
+    t1.set_link("some_id")
+    
+    # T2: Pot, Unlinked
+    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T2")))
+    t2.set_category("Pot")
+    # link is empty by default
+    
+    # T3: Groceries
+    t3 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T3")))
+    t3.set_category("Groceries")
+
+    mock_trxs = [t1, t2, t3]
+
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        # Filter -> Unlinked Pot
+        app.filter_categories = {"Unlinked Pot"}
+        # pylint: disable=protected-access
+        app._apply_filters()
+        await pilot.pause()
+
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T2"
+
+@pytest.mark.asyncio
+async def test_excluded_filter():
+    # Setup data
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
+    t1.set_excluded(True)
+    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T2")))
+    t2.set_excluded(False)
+
+    mock_trxs = [t1, t2]
+
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        # Default: All (Active) -> Should show only T2
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T2"
+
+        # Filter -> Excluded
+        app.filter_categories = {"Excluded"}
+        # pylint: disable=protected-access
+        app._apply_filters()
+        await pilot.pause()
+
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T1"
+
+        # Filter -> All (Active)
+        app.filter_categories = {"All (Active)"}
+        app._apply_filters()
+        await pilot.pause()
+
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T2"
+
     # Setup data with mixed case categories
     t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
     t1.set_category("Groceries")

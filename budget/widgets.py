@@ -76,7 +76,9 @@ class TransactionDetails(Vertical):
         self.query_one("#det-category", Static).update(trx.category())
         self.query_one("#det-pot-category", Static).update(trx.pot_category())
 
-        if linked_trx:
+        if trx.link() == Transaction.MANUAL_LINK_ID:
+            link_text = "Manually Linked"
+        elif linked_trx:
             link_text = f"{linked_trx.name()} ({linked_trx.amount()}) - {linked_trx.date()}"
         elif trx.link():
             link_text = f"ID: {trx.link()} (Not found)"

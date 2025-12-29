@@ -18,7 +18,14 @@ class FilterScreen(ModalScreen[list[str]]):
             yield Label("Select Filter", id="question")
 
             options = []
-            for opt in ["All", "Uncategorized", "Categorized"] + self.categories:
+            filter_options = [
+                "All (Active)",
+                "Excluded",
+                "Uncategorized",
+                "Categorized",
+                "Unlinked Pot"
+            ]
+            for opt in filter_options + self.categories:
                 state = opt in self.selected
                 options.append((opt, opt, state))
 

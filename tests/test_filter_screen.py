@@ -21,10 +21,10 @@ async def test_filter_screen_select_category():
         # Select "Groceries"
         selection_list = app.screen.query_one(SelectionList)
 
-        # "All" should be selected initially (default)
-        assert "All" in selection_list.selected
+        # "All (Active)" should be selected initially (default)
+        assert "All (Active)" in selection_list.selected
 
-        selection_list.deselect("All")
+        selection_list.deselect("All (Active)")
         selection_list.select("Groceries")
 
         # Click OK
@@ -56,17 +56,17 @@ async def test_filter_screen_select_all():
         app.action_filter_menu()
         await pilot.pause()
 
-        # Select "All"
+        # Select "All (Active)"
         selection_list = app.screen.query_one(SelectionList)
 
         # "Groceries" should be selected initially
         assert "Groceries" in selection_list.selected
 
         selection_list.deselect("Groceries")
-        selection_list.select("All")
+        selection_list.select("All (Active)")
 
         await pilot.click("#ok")
         await pilot.pause()
 
-        assert "All" in app.filter_categories
+        assert "All (Active)" in app.filter_categories
         assert len(app.displayed_transactions) == 1

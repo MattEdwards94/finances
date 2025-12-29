@@ -28,6 +28,8 @@ class BudgetApp(App):
         Binding("s", "save_transactions", "Save"),
         Binding("l", "load_file", "Load"),
         Binding("c", "clear_row_data", "Clear Row"),
+        Binding("x", "toggle_excluded", "Exclude"),
+        Binding("m", "mark_manual_link", "Manual Link"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -36,7 +38,7 @@ class BudgetApp(App):
         self.file_path = file_path
         self.transactions = []
         self.displayed_transactions = []
-        self.filter_categories = {"All"}
+        self.filter_categories = {"All (Active)"}
         self.unsaved_changes = False
 
     def compose(self) -> ComposeResult:
@@ -69,21 +71,37 @@ class BudgetApp(App):
         table = self.query_one(TransactionTable)
         cursor_row = table.cursor_coordinate.row
 
-        if "all" in filters:
-            self.displayed_transactions = self.transactions
-        else:
-            self.displayed_transactions = []
-            for trx in self.transactions:
-                cat = trx.category()
-                if "uncategorized" in filters and not cat:
-                    self.displayed_transactions.append(trx)
-                    continue
-                if "categorized" in filters and cat:
-                    self.displayed_transactions.append(trx)
-                    continue
-                if cat.lower() in filters:
-                    self.displayed_transactions.append(trx)
-                    continue
+        self.displayed_transactions = []
+        for trx in self.transactions:
+            is_excluded = trx.excluded()
+
+            # 1. Check Excluded filter
+            if "excluded" in filters and is_excluded:
+                self.displayed_transactions.append(trx)
+                continue
+
+            # 2. If excluded, skip (unless we matched above)
+            if is_excluded:
+                continue
+
+            # 3. Non-excluded filters
+            if "all (active)" in filters:
+                self.displayed_transactions.append(trx)
+                continue
+
+            cat = trx.category()
+            if "uncategorized" in filters and not cat:
+                self.displayed_transactions.append(trx)
+                continue
+            if "categorized" in filters and cat:
+                self.displayed_transactions.append(trx)
+                continue
+            if "unlinked pot" in filters and cat == "Pot" and not trx.link():
+                self.displayed_transactions.append(trx)
+                continue
+            if cat.lower() in filters:
+                self.displayed_transactions.append(trx)
+                continue
 
         table.load_data(self.displayed_transactions)
 
@@ -163,6 +181,40 @@ class BudgetApp(App):
 
         trx.clear_processed_fields()
         self.unsaved_changes = True
+        self._update_row()
+
+    def action_toggle_excluded(self) -> None:
+        table = self.query_one(TransactionTable)
+        if table.row_count == 0:
+            return
+
+        trx = self._get_trx_for_cursor()
+        new_state = not trx.excluded()
+        trx.set_excluded(new_state)
+        self.unsaved_changes = True
+        self.notify(f"Transaction {'excluded' if new_state else 'included'}")
+        self._update_row()
+
+    def action_mark_manual_link(self) -> None:
+        table = self.query_one(TransactionTable)
+        if table.row_count == 0:
+            return
+
+        trx = self._get_trx_for_cursor()
+
+        if trx.category() != "Pot":
+            self.notify("Only 'Pot' transactions can be manually linked.", severity="warning")
+            return
+
+        # If currently linked to a real transaction, unlink the partner
+        if trx.link() and trx.link() != Transaction.MANUAL_LINK_ID:
+            linked_trx = self._find_transaction_by_id(trx.link())
+            if linked_trx:
+                linked_trx.set_link("")
+
+        trx.set_link(Transaction.MANUAL_LINK_ID)
+        self.unsaved_changes = True
+        self.notify("Transaction marked as manually linked")
         self._update_row()
 
     def action_save_transactions(self) -> None:
@@ -279,7 +331,7 @@ class BudgetApp(App):
 
     def _update_sidebar(self, trx: Transaction) -> None:
         linked_trx = None
-        if trx.link():
+        if trx.link() and trx.link() != Transaction.MANUAL_LINK_ID:
             linked_trx = self._find_transaction_by_id(trx.link())
         self.query_one(TransactionDetails).update_transaction(trx, linked_trx)
 

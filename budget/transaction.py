@@ -4,6 +4,8 @@ from budget.raw_transaction import RawTransaction
 from budget import common
 
 class Transaction:
+    MANUAL_LINK_ID = "MANUAL"
+
     fields_to_persist = [
         "excluded",
         "category",
@@ -26,7 +28,11 @@ class Transaction:
             processed_columns = {}
 
         if "excluded" in processed_columns:
-            self._excluded = bool(processed_columns["excluded"])
+            val = processed_columns["excluded"]
+            if isinstance(val, str):
+                self._excluded = val == "True"
+            else:
+                self._excluded = bool(val)
         if "category" in processed_columns:
             self._category = processed_columns["category"]
         if "pot_category" in processed_columns:
