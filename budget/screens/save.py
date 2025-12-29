@@ -3,12 +3,18 @@ from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Horizontal, Vertical
 from textual.widgets import Label, Button, Input, DirectoryTree
-from textual.binding import Binding
 from textual.events import Key
 
 from budget.screens.common import BudgetDirectoryTree
 
-class SaveScreen(ModalScreen[str]):
+class SaveOrLoadScreen(ModalScreen[str]):
+    def __init__(self, mode: str = "save"):
+        super().__init__()
+        if mode not in ("save", "load"):
+            raise ValueError("mode must be 'save' or 'load'")
+
+        self.mode = mode
+
     def compose(self) -> ComposeResult:
         with Vertical(id="dialog"):
             with Horizontal(classes="header"):
@@ -17,7 +23,7 @@ class SaveScreen(ModalScreen[str]):
             yield BudgetDirectoryTree(str(Path.home() / "budget_data"))
             yield Input(placeholder="Enter filename", id="filename")
             with Horizontal(id="buttons"):
-                yield Button("Save", variant="primary", id="save")
+                yield Button(self.mode, variant="primary", id=self.mode)
                 yield Button("Cancel", variant="error", id="cancel")
 
     def on_mount(self) -> None:
@@ -52,6 +58,9 @@ class SaveScreen(ModalScreen[str]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "save":
             self.handle_save()
+        elif event.button.id == "load":
+            input_widget = self.query_one(Input)
+            self.dismiss(input_widget.value)
         elif event.button.id == "up":
             tree = self.query_one(DirectoryTree)
             current = Path(tree.path).resolve()
@@ -61,8 +70,13 @@ class SaveScreen(ModalScreen[str]):
         elif event.button.id == "cancel":
             self.dismiss(None)
 
-    def on_input_submitted(self, _event: Input.Submitted) -> None:
-        self.handle_save()
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        if self.mode == "load":
+            self.dismiss(event.value)
+        elif self.mode == "save":
+            self.handle_save()
+        else:
+            raise ValueError("Invalid mode")
 
     def on_key(self, event: Key) -> None:
         if event.key == "escape":
@@ -111,4 +125,3 @@ class SaveChangesConfirmScreen(ModalScreen[str]):
     def on_key(self, event: Key) -> None:
         if event.key == "escape":
             self.dismiss("cancel")
-

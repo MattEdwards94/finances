@@ -4,8 +4,7 @@ from textual.widgets import Label
 from budget.screens import (
     OverwriteConfirmScreen,
     SaveChangesConfirmScreen,
-    LoadScreen,
-    SaveScreen,
+    SaveOrLoadScreen,
     FilterScreen
 )
 from ..utils import ScreenTestApp
@@ -67,7 +66,7 @@ async def test_save_changes_confirm_screen_message():
 
 @pytest.mark.asyncio
 async def test_load_screen_cancel():
-    screen = LoadScreen()
+    screen = SaveOrLoadScreen(mode="load")
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#cancel")
@@ -75,7 +74,7 @@ async def test_load_screen_cancel():
 
 @pytest.mark.asyncio
 async def test_load_screen_load():
-    screen = LoadScreen()
+    screen = SaveOrLoadScreen(mode="load")
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#filename")
@@ -85,7 +84,7 @@ async def test_load_screen_load():
 
 @pytest.mark.asyncio
 async def test_save_screen_cancel():
-    screen = SaveScreen()
+    screen = SaveOrLoadScreen(mode="save")
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.click("#cancel")
@@ -95,7 +94,7 @@ async def test_save_screen_cancel():
 async def test_save_screen_save_new_file():
     # Mock Path.exists to return False
     with unittest.mock.patch("pathlib.Path.exists", return_value=False):
-        screen = SaveScreen()
+        screen = SaveOrLoadScreen(mode="save")
         app = ScreenTestApp(screen)
         async with app.run_test() as pilot:
             await pilot.click("#filename")
@@ -107,7 +106,7 @@ async def test_save_screen_save_new_file():
 async def test_save_screen_overwrite_existing_file():
     # Mock Path.exists to return True
     with unittest.mock.patch("pathlib.Path.exists", return_value=True):
-        screen = SaveScreen()
+        screen = SaveOrLoadScreen(mode="save")
         app = ScreenTestApp(screen)
         async with app.run_test() as pilot:
             await pilot.click("#filename")
@@ -127,7 +126,7 @@ async def test_save_screen_overwrite_existing_file():
 async def test_save_screen_overwrite_deny():
     # Mock Path.exists to return True
     with unittest.mock.patch("pathlib.Path.exists", return_value=True):
-        screen = SaveScreen()
+        screen = SaveOrLoadScreen(mode="save")
         app = ScreenTestApp(screen)
         async with app.run_test() as pilot:
             await pilot.click("#filename")
@@ -140,8 +139,9 @@ async def test_save_screen_overwrite_deny():
             # Click No to deny overwrite
             await pilot.click("#no")
 
-            # Should be back on SaveScreen
-            assert isinstance(app.screen, SaveScreen)
+            # Should be back on save screen
+            assert isinstance(app.screen, SaveOrLoadScreen)
+            assert app.screen.mode == "save"
 
             # Result should still be None (not dismissed)
             assert app.result is None
@@ -165,7 +165,7 @@ async def test_save_changes_confirm_screen_escape():
 
 @pytest.mark.asyncio
 async def test_load_screen_escape():
-    screen = LoadScreen()
+    screen = SaveOrLoadScreen(mode="load")
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.press("escape")
@@ -173,7 +173,7 @@ async def test_load_screen_escape():
 
 @pytest.mark.asyncio
 async def test_save_screen_escape():
-    screen = SaveScreen()
+    screen = SaveOrLoadScreen(mode="save")
     app = ScreenTestApp(screen)
     async with app.run_test() as pilot:
         await pilot.press("escape")

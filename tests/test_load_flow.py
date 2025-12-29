@@ -2,7 +2,7 @@ import pytest
 # pylint: disable=duplicate-code
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
-from budget.screens import SaveChangesConfirmScreen, LoadScreen
+from budget.screens import SaveChangesConfirmScreen, SaveOrLoadScreen
 from . import utils
 
 @pytest.mark.asyncio
@@ -39,8 +39,9 @@ async def test_load_flow_existing_data_no_save_then_load():
         await pilot.click("#no")
         await pilot.pause()
 
-        # Should now be on LoadScreen
-        assert isinstance(app.screen, LoadScreen)
+        # Should now be on load screen
+        assert isinstance(app.screen, SaveOrLoadScreen)
+        assert app.screen.mode == "load"
 
         # Data should be cleared
         assert not app.transactions
@@ -68,8 +69,9 @@ async def test_load_flow_existing_data_save_then_load():
 
         mock_save.assert_called_once()
 
-        # Should now be on LoadScreen
-        assert isinstance(app.screen, LoadScreen)
+        # Should now be on load screen
+        assert isinstance(app.screen, SaveOrLoadScreen)
+        assert app.screen.mode == "load"
 
         # Load new file
         await pilot.click("#filename")

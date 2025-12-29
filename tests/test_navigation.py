@@ -2,8 +2,7 @@ import pytest
 from textual.app import App
 from textual.widgets import DirectoryTree, SelectionList
 from budget.screens import (
-    LoadScreen,
-    SaveScreen,
+    SaveOrLoadScreen,
     FilterScreen,
     BudgetDirectoryTree,
     BudgetSelectionList,
@@ -38,7 +37,7 @@ def test_budget_selection_list_bindings():
 @pytest.mark.asyncio
 async def test_load_screen_uses_custom_tree():
     """Test that LoadScreen uses BudgetDirectoryTree."""
-    screen = LoadScreen()
+    screen = SaveOrLoadScreen(mode="load")
     app = ScreenTestApp(screen)
     async with app.run_test() as _:
         tree = screen.query_one(DirectoryTree)
@@ -47,7 +46,7 @@ async def test_load_screen_uses_custom_tree():
 @pytest.mark.asyncio
 async def test_save_screen_uses_custom_tree():
     """Test that SaveScreen uses BudgetDirectoryTree."""
-    screen = SaveScreen()
+    screen = SaveOrLoadScreen(mode="save")
     app = ScreenTestApp(screen)
     async with app.run_test() as _:
         tree = screen.query_one(DirectoryTree)

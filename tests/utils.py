@@ -112,4 +112,3 @@ class ScreenTestApp(App):
             self.result = result
             self.exit()
         self.push_screen(self.screen_to_test, handle_result)
-

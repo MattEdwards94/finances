@@ -2,10 +2,10 @@ import pytest
 # pylint: disable=duplicate-code
 from textual.coordinate import Coordinate
 from budget.main import BudgetApp
+from budget.screens import SaveOrLoadScreen
 from budget.widgets import TransactionTable, TransactionDetails
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
-from budget.screens import SaveScreen
 from . import utils
 
 @pytest.mark.asyncio
@@ -127,8 +127,9 @@ async def test_app_clear_data_save_cancel():
         await pilot.click("#yes")
         await pilot.pause()
 
-        # Should be on SaveScreen
-        assert isinstance(app.screen, SaveScreen)
+        # Should be on save screen
+        assert isinstance(app.screen, SaveOrLoadScreen)
+        assert app.screen.mode == "save"
 
         # Cancel save
         await pilot.click("#cancel")

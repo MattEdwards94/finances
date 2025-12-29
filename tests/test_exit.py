@@ -1,6 +1,6 @@
 import pytest
 from budget.main import BudgetApp
-from budget.screens import SaveChangesConfirmScreen, SaveScreen
+from budget.screens import SaveChangesConfirmScreen, SaveOrLoadScreen
 
 @pytest.mark.asyncio
 async def test_exit_with_changes_prompt():
@@ -41,4 +41,5 @@ async def test_exit_with_changes_save():
         await pilot.pause()
 
         # Should show SaveScreen
-        assert isinstance(app.screen, SaveScreen)
+        assert isinstance(app.screen, SaveOrLoadScreen)
+        assert app.screen.mode == "save"

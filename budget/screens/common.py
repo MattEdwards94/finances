@@ -14,4 +14,3 @@ class BudgetSelectionList(SelectionList):
         Binding("j", "cursor_down", "Down", show=False),
         Binding("k", "cursor_up", "Up", show=False),
     ]
-

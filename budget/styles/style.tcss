@@ -19,7 +19,7 @@ DataTable {
     height: 1fr;
 }
 
-SaveScreen {
+SaveOrLoadScreen {
     align: center middle;
 }
 

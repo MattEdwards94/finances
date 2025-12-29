@@ -5,8 +5,7 @@ from textual.binding import Binding
 from budget import load_data, save_transactions
 from budget.transaction import Transaction
 from budget.screens import (
-    SaveScreen,
-    LoadScreen,
+    SaveOrLoadScreen,
     SaveChangesConfirmScreen,
     FilterScreen,
     PotCategoryScreen,
@@ -133,7 +132,7 @@ class BudgetApp(App):
                 self.unsaved_changes = False
                 self.notify(f"Saved to {filename}")
 
-        self.push_screen(SaveScreen(), check_save)
+        self.push_screen(SaveOrLoadScreen("save"), check_save)
 
     def action_load_file(self) -> None:
         if not self.transactions:
@@ -158,7 +157,7 @@ class BudgetApp(App):
                 self.load_transactions(filename)
                 self.notify(f"Loaded {filename}")
 
-        self.push_screen(LoadScreen(), check_load)
+        self.push_screen(SaveOrLoadScreen("load"), check_load)
 
     def action_clear_data(self) -> None:
         if not self.transactions:
@@ -187,7 +186,7 @@ class BudgetApp(App):
                     next_action()
             # If cancelled, filename==None, do nothing.
 
-        self.push_screen(SaveScreen(), after_save)
+        self.push_screen(SaveOrLoadScreen("save"), after_save)
 
     def _clear_internal(self):
         self.transactions = []
@@ -208,7 +207,7 @@ class BudgetApp(App):
                             self.notify(f"Saved to {filename}")
                             self.exit()
 
-                    self.push_screen(SaveScreen(), after_save)
+                    self.push_screen(SaveOrLoadScreen("save"), after_save)
                 elif response == "no":
                     self.exit()
                 # cancel: do nothing

@@ -1,12 +1,10 @@
 from textual.screen import ModalScreen
 from textual.containers import Horizontal, Vertical
 from textual.events import Key
-from textual.widgets import Label, Button, SelectionList
+from textual.widgets import Label, Button
 from textual.app import ComposeResult
-from textual.binding import Binding
 
 from budget.screens.common import BudgetSelectionList
-
 
 # pylint: disable=too-many-ancestors
 class FilterScreen(ModalScreen[list[str]]):
@@ -43,4 +41,3 @@ class FilterScreen(ModalScreen[list[str]]):
     def on_key(self, event: Key) -> None:
         if event.key == "escape":
             self.dismiss(None)
-
