@@ -66,25 +66,31 @@ class BudgetApp(App):
         # Keep special keys as is or handle them specifically
         filters = {f.lower() for f in self.filter_categories}
 
+        table = self.query_one(TransactionTable)
+        cursor_row = table.cursor_coordinate.row
+
         if "all" in filters:
             self.displayed_transactions = self.transactions
-            self.query_one(TransactionTable).load_data(self.displayed_transactions)
-            return
+        else:
+            self.displayed_transactions = []
+            for trx in self.transactions:
+                cat = trx.category()
+                if "uncategorized" in filters and not cat:
+                    self.displayed_transactions.append(trx)
+                    continue
+                if "categorized" in filters and cat:
+                    self.displayed_transactions.append(trx)
+                    continue
+                if cat.lower() in filters:
+                    self.displayed_transactions.append(trx)
+                    continue
 
-        self.displayed_transactions = []
-        for trx in self.transactions:
-            cat = trx.category()
-            if "uncategorized" in filters and not cat:
-                self.displayed_transactions.append(trx)
-                continue
-            if "categorized" in filters and cat:
-                self.displayed_transactions.append(trx)
-                continue
-            if cat.lower() in filters:
-                self.displayed_transactions.append(trx)
-                continue
+        table.load_data(self.displayed_transactions)
 
-        self.query_one(TransactionTable).load_data(self.displayed_transactions)
+        # Restore cursor position
+        if table.row_count > 0:
+            new_row = min(cursor_row, table.row_count - 1)
+            table.cursor_coordinate = (new_row, 0)
 
     def action_filter_menu(self) -> None:
         # Collect unique categories
@@ -128,7 +134,6 @@ class BudgetApp(App):
                                 linked_trx.set_category("Pot")
                                 linked_trx.set_pot_category(result)
                                 linked_trx.set_link(trx.id())
-                                self._refresh_transaction_row(linked_trx)
 
                         self._update_row()
 
@@ -155,7 +160,6 @@ class BudgetApp(App):
             linked_trx = self._find_transaction_by_id(trx.link())
             if linked_trx:
                 linked_trx.set_link("")
-                self._refresh_transaction_row(linked_trx)
 
         trx.clear_processed_fields()
         self.unsaved_changes = True
@@ -262,25 +266,22 @@ class BudgetApp(App):
 
     def _update_row(self) -> None:
         """
-        Reloads the current row in the table to reflect any changes made to the
-        underlying transaction, and updates the sidebar.
+        Reloads the table data to reflect changes and apply filters,
+        then updates the sidebar.
         """
-        table = self.query_one(TransactionTable)
-        trx = self._get_trx_for_cursor()
-        table.update_current_row(trx)
+        self._apply_filters()
 
-        self._update_sidebar(trx)
+        if self.displayed_transactions:
+            trx = self._get_trx_for_cursor()
+            self._update_sidebar(trx)
+        else:
+            self.query_one(TransactionDetails).clear_transaction()
 
     def _update_sidebar(self, trx: Transaction) -> None:
         linked_trx = None
         if trx.link():
             linked_trx = self._find_transaction_by_id(trx.link())
         self.query_one(TransactionDetails).update_transaction(trx, linked_trx)
-
-    def _refresh_transaction_row(self, trx: Transaction) -> None:
-        if trx in self.displayed_transactions:
-            index = self.displayed_transactions.index(trx)
-            self.query_one(TransactionTable).update_row_by_index(index, trx)
 
     def _find_transaction_by_id(self, trx_id: str) -> Transaction | None:
         for t in self.transactions:

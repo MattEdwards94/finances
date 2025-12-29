@@ -70,9 +70,18 @@ async def test_set_category_while_filtered():
         assert t2.category() == "Food"
         assert t1.category() == ""
 
-        # Verify table still shows it (until refresh)
-        # T2 is at row 1
-        assert table.get_cell_at(Coordinate(1, 5)) == "Food"
+        # Verify table auto-updated (T2 removed from Uncategorized view)
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T1"
+        
+        # Cursor should be at row 0 (since row 1 was removed, and row 0 is the only one left)
+        # Or if we were at row 1, and it was removed, we might be at row 0 now.
+        # T1 was at row 0. T2 was at row 1.
+        # If T2 is removed, T1 remains at row 0.
+        # Cursor was at row 1.
+        # _apply_filters restores cursor to min(cursor, row_count-1).
+        # row_count is 1. cursor was 1. new cursor is min(1, 0) = 0.
+        assert table.cursor_coordinate.row == 0
 
         # Toggle filter to refresh (Uncategorized -> Categorized)
         app.filter_categories = {"Categorized"}
@@ -123,3 +132,73 @@ async def test_case_insensitive_filtering():
         assert len(app.displayed_transactions) == 3
         names = sorted([t.name() for t in app.displayed_transactions])
         assert names == ["T1", "T2", "T3"]
+
+@pytest.mark.asyncio
+async def test_auto_update_removes_row_and_adjusts_cursor():
+    # Setup: 3 uncategorized transactions
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
+    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T2")))
+    t3 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T3")))
+
+    mock_trxs = [t1, t2, t3]
+
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        # Filter to uncategorized
+        app.filter_categories = {"Uncategorized"}
+        # pylint: disable=protected-access
+        app._apply_filters()
+        
+        table = app.query_one(TransactionTable)
+        assert table.row_count == 3
+        
+        # Move cursor to middle row (T2)
+        table.move_cursor(row=1)
+        assert table.cursor_coordinate.row == 1
+        
+        # Categorize T2
+        app.action_set_category("Food")
+        
+        # T2 should be removed. T1 and T3 remain.
+        # T1 is at 0. T3 is at 1.
+        assert len(app.displayed_transactions) == 2
+        assert app.displayed_transactions[0].name() == "T1"
+        assert app.displayed_transactions[1].name() == "T3"
+        
+        # Cursor was at 1. Row count is 2. Max index is 1.
+        # Cursor should stay at 1 (now pointing to T3).
+        assert table.cursor_coordinate.row == 1
+        
+        # Verify sidebar shows T3
+        assert str(app.query_one("#det-desc").render()) == "T3"
+
+@pytest.mark.asyncio
+async def test_auto_update_last_row_cursor_moves_up():
+    # Setup: 2 uncategorized transactions
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1")))
+    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T2")))
+
+    mock_trxs = [t1, t2]
+
+    async with utils.run_app_with_mock_data(mock_trxs) as (app, pilot, _):
+        app.filter_categories = {"Uncategorized"}
+        # pylint: disable=protected-access
+        app._apply_filters()
+        
+        table = app.query_one(TransactionTable)
+        
+        # Move cursor to last row (T2)
+        table.move_cursor(row=1)
+        
+        # Categorize T2
+        app.action_set_category("Food")
+        
+        # T2 removed. T1 remains.
+        assert len(app.displayed_transactions) == 1
+        assert app.displayed_transactions[0].name() == "T1"
+        
+        # Cursor was at 1. Row count is 1. Max index is 0.
+        # Cursor should move to 0.
+        assert table.cursor_coordinate.row == 0
+        
+        # Sidebar should show T1
+        assert str(app.query_one("#det-desc").render()) == "T1"
