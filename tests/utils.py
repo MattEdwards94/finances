@@ -1,6 +1,7 @@
 
 import contextlib
 import unittest.mock
+from textual.app import App
 from budget.main import BudgetApp
 from budget.transaction import Transaction
 from budget.raw_transaction import RawTransaction
@@ -93,3 +94,22 @@ def mock_transactions_for_filtering():
     t3 = Transaction(RawTransaction(mock_raw_trx_data(Name="T3")))
     t3.set_category("Transport")
     return [t1, t2, t3]
+
+class ScreenTestApp(App):
+    """
+    A helper class to create an app for a specific screen for testing
+    
+    Testing for Textual requires an App, not just a widget, so this class
+    simply wraps the widget in an "App"
+    """
+    def __init__(self, screen_to_test):
+        super().__init__()
+        self.screen_to_test = screen_to_test
+        self.result = None
+
+    def on_mount(self):
+        def handle_result(result):
+            self.result = result
+            self.exit()
+        self.push_screen(self.screen_to_test, handle_result)
+

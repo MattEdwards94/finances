@@ -1,6 +1,5 @@
 import unittest.mock
 import pytest
-from textual.app import App
 from textual.widgets import Label
 from budget.screens import (
     OverwriteConfirmScreen,
@@ -9,18 +8,12 @@ from budget.screens import (
     SaveScreen,
     FilterScreen
 )
+from ..utils import ScreenTestApp
 
-class ScreenTestApp(App):
-    def __init__(self, screen_to_test):
-        super().__init__()
-        self.screen_to_test = screen_to_test
-        self.result = None
+#
+#   Save changes
+#
 
-    def on_mount(self):
-        def handle_result(result):
-            self.result = result
-            self.exit()
-        self.push_screen(self.screen_to_test, handle_result)
 
 @pytest.mark.asyncio
 async def test_overwrite_confirm_screen_yes():

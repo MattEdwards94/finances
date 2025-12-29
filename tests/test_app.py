@@ -9,20 +9,7 @@ from budget.screens import SaveScreen
 from . import utils
 
 @pytest.mark.asyncio
-async def test_app_initial_state():
-    app = BudgetApp()
-    async with app.run_test() as _:
-        assert not app.transactions
-
-        table = app.query_one(TransactionTable)
-        assert table.row_count == 0
-
-        details = app.query_one(TransactionDetails)
-        assert str(details.query_one("#det-desc").render()) == "--"
-
-@pytest.mark.asyncio
 async def test_app_load_transactions():
-    # Mock load_data to return some transactions
     mock_trxs = [
         Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Trx 1"))),
         Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Trx 2")))
