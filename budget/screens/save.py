@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 from textual.app import ComposeResult
 from textual.screen import ModalScreen
 from textual.containers import Horizontal, Vertical
@@ -46,10 +47,10 @@ class SaveOrLoadScreen(ModalScreen[str]):
             return
 
         if Path(filename).exists():
-            def check_overwrite(should_overwrite: bool) -> None:
+            def check_overwrite(should_overwrite: Any) -> None:
                 if should_overwrite:
                     self.dismiss(filename)
-                # else do nothing, stay on SaveScreen
+                # else do nothing, stay on save screen
 
             self.app.push_screen(OverwriteConfirmScreen(), check_overwrite)
         else:
@@ -60,7 +61,8 @@ class SaveOrLoadScreen(ModalScreen[str]):
             self.handle_save()
         elif event.button.id == "load":
             input_widget = self.query_one(Input)
-            self.dismiss(input_widget.value)
+            if input_widget.value:
+                self.dismiss(input_widget.value)
         elif event.button.id == "up":
             tree = self.query_one(DirectoryTree)
             current = Path(tree.path).resolve()
