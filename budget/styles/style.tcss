@@ -66,6 +66,60 @@ PotTransferSelectScreen {
     align: center middle;
 }
 
+SummaryScreen {
+    align: center middle;
+}
+
 PotTransferSelectScreen #dialog {
     width: 80;
+}
+
+#summary-dialog {
+    width: 90%;
+    height: 90%;
+    border: thick $background 80%;
+    background: $surface;
+    padding: 1 2;
+    layout: vertical;
+}
+
+#summary-content {
+    height: 1fr;
+}
+
+#summary-title {
+    text-align: center;
+    text-style: bold;
+    width: 100%;
+    margin-bottom: 1;
+}
+
+.section-header {
+    text-style: bold;
+    margin-top: 1;
+    margin-bottom: 1;
+    background: $primary;
+    color: $text;
+    width: 100%;
+    padding-left: 1;
+}
+
+.pot-header {
+    text-style: bold;
+    margin-top: 1;
+    color: $accent;
+}
+
+#pot-details-container {
+    height: auto;
+}
+
+.pot-table {
+    height: auto;
+    margin-bottom: 1;
+}
+
+#category-table {
+    height: auto;
+    margin-bottom: 1;
 }

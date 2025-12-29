@@ -9,6 +9,7 @@ from budget.screens import (
     SaveChangesConfirmScreen,
     FilterScreen,
     PotCategoryScreen,
+    SummaryScreen,
 )
 from budget.screens.pot_transfer import PotTransferSelectScreen
 from budget.widgets import TransactionDetails, TransactionTable
@@ -25,7 +26,8 @@ class BudgetApp(App):
         Binding("h", "set_category('Holidays')", "Holidays"),
         Binding("p", "set_category('Pot')", "Pot"),
         Binding("f", "filter_menu", "Filter"),
-        Binding("s", "save_transactions", "Save"),
+        Binding("ctrl+s", "save_transactions", "Save"),
+        Binding("s", "show_summary", "Summary"),
         Binding("l", "load_file", "Load"),
         Binding("c", "clear_row_data", "Clear Row"),
         Binding("x", "toggle_excluded", "Exclude"),
@@ -216,6 +218,9 @@ class BudgetApp(App):
         self.unsaved_changes = True
         self.notify("Transaction marked as manually linked")
         self._update_row()
+
+    def action_show_summary(self) -> None:
+        self.push_screen(SummaryScreen(self.transactions))
 
     def action_save_transactions(self) -> None:
         def check_save(filename: str | None) -> None:

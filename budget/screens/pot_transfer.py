@@ -30,7 +30,7 @@ class PotTransferSelectScreen(ModalScreen[str | None]):
                           f"({self.current_transaction.amount()})")
             yield Label(label_text, id="question")
             yield DataTable(id="candidate_table")
-            with Horizontal(classes="buttons"):
+            with Horizontal(id="buttons"):
                 yield Button("Skip/Cancel", variant="default", id="cancel")
 
     def on_mount(self) -> None:
