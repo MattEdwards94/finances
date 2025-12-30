@@ -28,6 +28,9 @@ Testing
 - This project uses `pytest` and `pytest-asyncio` for tests located in the `./tests` directory.
 - **Running Tests**:
   - Ensure you are in the repository root and have the virtual environment activated.
+    - `source venv/bin/activate` if the venv exists
+    - `python3 -m venv venv && source venv/bin/activate && pip install -e ".[dev]"` to create
+      the venv and install dependencies if it does not exist.
   - Run: `pytest`
 - **Writing Tests**:
   - Use `pytest.mark.asyncio` for async tests, especially those involving Textual apps.
