@@ -66,6 +66,8 @@ class TransactionDetails(Vertical):
         yield Label("--", id="det-pot-category")
         yield Label("Linked Transaction:", classes="detail-label")
         yield Label("--", id="det-link")
+        yield Label("Income:", classes="detail-label")
+        yield Label("--", id="det-income")
         yield Label("Status:", classes="detail-label")
         yield Label("--", id="det-status")
 
@@ -86,6 +88,7 @@ class TransactionDetails(Vertical):
             link_text = "--"
         self.query_one("#det-link", Static).update(link_text)
 
+        self.query_one("#det-income", Static).update("Yes" if trx.income() else "No")
         self.query_one("#det-status", Static).update(trx.status())
 
     def clear_transaction(self) -> None:
@@ -95,4 +98,5 @@ class TransactionDetails(Vertical):
         self.query_one("#det-category", Static).update("--")
         self.query_one("#det-pot-category", Static).update("--")
         self.query_one("#det-link", Static).update("--")
+        self.query_one("#det-income", Static).update("--")
         self.query_one("#det-status", Static).update("--")

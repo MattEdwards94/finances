@@ -52,24 +52,24 @@ async def test_summary_screen_category_sums():
 async def test_summary_screen_pot_details():
     # Setup data
     # Pot 1: Holiday
-    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Flight", Amount="-200.00", Date="2023-01-01")))
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Flight", Amount="-200.00", Date="2023-01-01", **{"Transaction ID": "1"})))
     t1.set_category("Pot")
     t1.set_pot_category("Holiday")
     t1.set_link("LINK1")
     
     # Pot 2: Car
-    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Fuel", Amount="-50.00", Date="2023-01-02")))
+    t2 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Fuel", Amount="-50.00", Date="2023-01-02", **{"Transaction ID": "2"})))
     t2.set_category("Pot")
     t2.set_pot_category("Car")
     # Unlinked
     
     # Pot Transfer (should be ignored)
-    t3 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Transfer", Amount="100.00", Type="Pot transfer")))
+    t3 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Transfer", Amount="100.00", Type="Pot transfer", **{"Transaction ID": "3"})))
     t3.set_category("Pot")
     t3.set_pot_category("Holiday")
     
     # Manual Link
-    t4 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Hotel", Amount="-150.00", Date="2023-01-03")))
+    t4 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="Hotel", Amount="-150.00", Date="2023-01-03", **{"Transaction ID": "4"})))
     t4.set_category("Pot")
     t4.set_pot_category("Holiday")
     t4.set_link(Transaction.MANUAL_LINK_ID)
@@ -111,3 +111,43 @@ async def test_summary_screen_pot_details():
         
         assert dt_holiday.get_cell_at((1, 1)) == "Hotel"
         assert dt_holiday.get_cell_at((1, 3)) == "Manual"
+
+@pytest.mark.asyncio
+async def test_summary_screen_manual_link_toggle():
+    # Setup data
+    t1 = Transaction(RawTransaction(utils.mock_raw_trx_data(Name="T1", Transaction_ID="1")))
+    t1.set_category("Pot")
+    t1.set_pot_category("TestPot")
+    
+    transactions = [t1]
+    
+    screen = SummaryScreen(transactions)
+    app = utils.ScreenTestApp(screen)
+    
+    async with app.run_test() as pilot:
+        # Find the table
+        table = app.screen.query_one(".pot-table", DataTable)
+        
+        # Focus table and select row
+        table.focus()
+        table.cursor_coordinate = (0, 0)
+        
+        # Initial state: No
+        assert table.get_cell_at((0, 3)) == "No"
+        assert t1.link() == ""
+        
+        # Press 'm'
+        await pilot.press("m")
+        await pilot.pause()
+        
+        # Should be Manual
+        assert table.get_cell_at((0, 3)) == "Manual"
+        assert t1.link() == Transaction.MANUAL_LINK_ID
+        
+        # Press 'm' again to toggle off
+        await pilot.press("m")
+        await pilot.pause()
+        
+        # Should be No
+        assert table.get_cell_at((0, 3)) == "No"
+        assert t1.link() == ""

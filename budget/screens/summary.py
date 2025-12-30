@@ -14,6 +14,9 @@ class SummaryScreen(ModalScreen):
         with Vertical(id="summary-dialog"):
             yield Label("Budget Summary", id="summary-title")
             with VerticalScroll(id="summary-content"):
+                yield Label("Income Summary", classes="section-header")
+                yield DataTable(id="income-table")
+
                 yield Label("Category Summary", classes="section-header")
                 yield DataTable(id="category-table")
 
@@ -24,8 +27,23 @@ class SummaryScreen(ModalScreen):
                 yield Button("Close", variant="primary", id="close")
 
     def on_mount(self) -> None:
+        self._populate_income_summary()
         self._populate_category_summary()
         self._populate_pot_details()
+
+    def _populate_income_summary(self) -> None:
+        table = self.query_one("#income-table", DataTable)
+        table.add_columns("Date", "Name", "Amount")
+        table.cursor_type = "row"
+
+        income_trxs = [t for t in self.transactions if t.income() and not t.excluded()]
+
+        total_income = 0.0
+        for trx in income_trxs:
+            table.add_row(str(trx.date()), trx.name(), f"{trx.amount():.2f}")
+            total_income += trx.amount()
+
+        table.add_row("Total", "", f"{total_income:.2f}")
 
     def _populate_category_summary(self) -> None:
         table = self.query_one("#category-table", DataTable)
@@ -36,6 +54,9 @@ class SummaryScreen(ModalScreen):
         sums = {}
         for trx in self.transactions:
             if trx.excluded():
+                continue
+
+            if trx.income():
                 continue
 
             cat = trx.category()
@@ -84,7 +105,11 @@ class SummaryScreen(ModalScreen):
             container.mount(Label(f"Pot: {pot_cat}", classes="pot-header"))
 
             dt = DataTable(classes="pot-table")
-            dt.add_columns("Date", "Name", "Amount", "Linked")
+            dt.add_column("Date", key="Date")
+            dt.add_column("Name", key="Name")
+            dt.add_column("Amount", key="Amount")
+            dt.add_column("Linked", key="Linked")
+            dt.add_column("Notes", key="Notes")
             dt.cursor_type = "row"
 
             for trx in pot_trxs[pot_cat]:
@@ -98,9 +123,69 @@ class SummaryScreen(ModalScreen):
                     str(trx.date()),
                     trx.name(),
                     f"{trx.amount():.2f}",
-                    linked_status
+                    linked_status,
+                    trx.notes(),
+                    key=trx.id()
                 )
             container.mount(dt)
+
+    def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
+        # Optional: maybe show details or something?
+        pass
+
+    def on_key(self, event) -> None:
+        if event.key == "m":
+            self._handle_manual_link_toggle()
+
+    def _handle_manual_link_toggle(self) -> None:
+        # Find which table is focused
+        focused = self.app.focused
+        if not isinstance(focused, DataTable) or "pot-table" not in focused.classes:
+            return
+
+        cursor_row = focused.cursor_coordinate.row
+        if cursor_row < 0 or cursor_row >= focused.row_count:
+            return
+
+        # Get transaction ID from row key
+        # We need to get the row key for the cursor position
+        # DataTable.coordinate_to_cell_key returns CellKey(row_key, column_key)
+        try:
+            row_key = focused.coordinate_to_cell_key(focused.cursor_coordinate).row_key
+            trx_id = row_key.value
+        except Exception: # pylint: disable=broad-exception-caught
+            return
+
+        # Find transaction
+        trx = next((t for t in self.transactions if t.id() == trx_id), None)
+        if not trx:
+            return
+
+        # Toggle manual link
+        if trx.link() == Transaction.MANUAL_LINK_ID:
+            trx.set_link("")
+            self.notify("Manual link removed")
+        else:
+            # If linked to something else, unlink it first?
+            # Consistent with main screen behavior:
+            if trx.link():
+                # We need to find the linked transaction to clear its link
+                linked_trx = next((t for t in self.transactions if t.id() == trx.link()), None)
+                if linked_trx:
+                    linked_trx.set_link("")
+
+            trx.set_link(Transaction.MANUAL_LINK_ID)
+            self.notify("Marked as manually linked")
+
+        # Refresh the specific row in the table
+        linked_status = "No"
+        if trx.link():
+            linked_status = "Yes"
+            if trx.link() == Transaction.MANUAL_LINK_ID:
+                linked_status = "Manual"
+
+        # Update the "Linked" column (index 3)
+        focused.update_cell(row_key, "Linked", linked_status)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "close":

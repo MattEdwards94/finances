@@ -123,3 +123,8 @@ PotTransferSelectScreen #dialog {
     height: auto;
     margin-bottom: 1;
 }
+
+#income-table {
+    height: auto;
+    margin-bottom: 1;
+}

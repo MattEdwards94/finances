@@ -32,6 +32,7 @@ class BudgetApp(App):
         Binding("c", "clear_row_data", "Clear Row"),
         Binding("x", "toggle_excluded", "Exclude"),
         Binding("m", "mark_manual_link", "Manual Link"),
+        Binding("i", "toggle_income", "Income"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -217,6 +218,18 @@ class BudgetApp(App):
         trx.set_link(Transaction.MANUAL_LINK_ID)
         self.unsaved_changes = True
         self.notify("Transaction marked as manually linked")
+        self._update_row()
+
+    def action_toggle_income(self) -> None:
+        table = self.query_one(TransactionTable)
+        if table.row_count == 0:
+            return
+
+        trx = self._get_trx_for_cursor()
+        new_state = not trx.income()
+        trx.set_income(new_state)
+        self.unsaved_changes = True
+        self.notify(f"Transaction marked as {'Income' if new_state else 'Expense'}")
         self._update_row()
 
     def action_show_summary(self) -> None:
